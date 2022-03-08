@@ -16,10 +16,18 @@
     "baseUrl": ".",
     "types": ["webpack-env", "resize-observer-browser"],
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@game/*": ["../game/*"]
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", "tests/**/*.ts", "tests/**/*.tsx"],
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "../game/**/*.ts"
+  ],
   "exclude": ["node_modules"]
 }

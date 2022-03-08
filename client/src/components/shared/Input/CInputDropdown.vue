@@ -1,10 +1,12 @@
 <template>
-  <div ref="dropdown" class="relative text-bg-light inline-block">
+  <div ref="dropdown" class="relative text-bg-dark inline-block">
+    <label v-if="label" class="block text-t-sub font-medium">{{ label }}</label>
+
     <button
       class="
         flex
+        justify-between
         items-center
-        justify-center
         bg-t-sub
         rounded-lg
         font-semibold
@@ -12,7 +14,9 @@
         px-4
         py-3
         focus:outline-none
+        w-full
       "
+      type="button"
       @click="isOpen = !isOpen"
     >
       <p
@@ -25,6 +29,7 @@
       >
         {{ modelValue }}
       </p>
+
       <Icon
         class="ml-1 -mr-1 w-6 h-6 transform transition-transform duration-300"
         :class="{ 'rotate-180': isOpen }"
@@ -69,6 +74,7 @@
             duration-300
             hover:text-accent-500
           "
+          type="button"
           @click="
             $emit('update:modelValue', option);
             isOpen = false;
@@ -101,6 +107,10 @@ export default defineComponent({
     options: {
       type: Array as () => string[],
       required: true,
+    },
+    label: {
+      type: String,
+      default: "",
     },
   },
   setup(props) {

@@ -13,6 +13,7 @@
     "@iconify-icons/feather": "^1.2.1",
     "@iconify/vue": "^3.1.4",
     "@tweenjs/tween.js": "^18.6.4",
+    "@vueuse/core": "^7.7.1",
     "autoprefixer": "^10",
     "core-js": "^3.8.3",
     "postcss": "^8",
@@ -20,6 +21,7 @@
     "three": "^0.136.0",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
+    "vue3-slider": "^1.6.8",
     "vuex": "^4.0.0"
   },
   "devDependencies": {
