@@ -6,7 +6,7 @@ module.exports = defineConfig({
   configureWebpack: {
     resolve: {
       alias: {
-        "@game": path.resolve(__dirname, "../game"),
+        "@shared": path.resolve(__dirname, "../shared"),
       },
     },
   },

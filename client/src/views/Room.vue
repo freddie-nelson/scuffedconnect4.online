@@ -1,8 +1,9 @@
 <script lang="ts">
 import { computed, defineComponent, onBeforeMount, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useStore } from "@/store";
 
-import { Colors, hex } from "@game/colors";
+import { Colors, hex } from "@shared/colors";
 
 import addIcon from "@iconify-icons/feather/user";
 
@@ -13,7 +14,7 @@ import CButton from "@/components/shared/Button/CButton.vue";
 import CGradientHeading from "@/components/shared/Heading/CGradientHeading.vue";
 import CInputText from "@/components/shared/Input/CInputText.vue";
 import CInputDropdown from "@/components/shared/Input/CInputDropdown.vue";
-import { useStore } from "@/store";
+import Vue3Slider from "vue3-slider";
 
 export default defineComponent({
   name: "Room",
@@ -25,11 +26,17 @@ export default defineComponent({
     CGradientHeading,
     CInputText,
     CInputDropdown,
+    Vue3Slider,
   },
   setup() {
     const router = useRouter();
     const route = useRoute();
     const store = useStore();
+
+    const game = computed(() => store.state.game);
+    onBeforeMount(() => {
+      store.commit("RESET_GAME");
+    });
 
     const type = ref("local");
     const isOnline = computed(() => type.value === "online");
@@ -69,14 +76,19 @@ export default defineComponent({
         });
     };
 
-    const colorOptions = Object.entries(Colors)
-      .filter((c) => parseInt(c[0], 10) >= 0)
-      .map((c) => c[1].toString().toLowerCase());
+    const colorOptions = computed(() => {
+      return Object.entries(Colors)
+        .filter((c) => parseInt(c[0], 10) >= 0)
+        .filter(
+          (c) => game.value?.findPlayerByColor(Number(c[0])) === undefined
+        )
+        .map((c) => c[1].toString().toLowerCase());
+    });
 
     const showAddPlayerModal = ref(false);
     const addPlayerDetails = ref({
       username: "",
-      color: colorOptions[0],
+      color: colorOptions.value[0],
     });
 
     const hexColor = computed(() => {
@@ -88,14 +100,35 @@ export default defineComponent({
       showAddPlayerModal.value = false;
 
       addPlayerDetails.value.username = "";
-      addPlayerDetails.value.color = colorOptions[0];
+      addPlayerDetails.value.color = colorOptions.value[0];
     };
 
     const addPlayer = () => {
+      if (!addPlayerDetails.value.username) return;
+
+      game.value?.addPlayer({
+        id: Math.random().toString().split(".")[1],
+        username: addPlayerDetails.value.username,
+        // @ts-expect-error this works
+        color: Colors[addPlayerDetails.value.color.toUpperCase()],
+      });
+
       clearAddPlayer();
     };
 
+    const rows = ref(6);
+    const cols = ref(7);
+
+    const startGame = () => {
+      if (!game.value || game.value.getPlayerCount() < 2) return;
+
+      game.value.setGridSize(rows.value, cols.value);
+      router.push({ name: "Game" });
+    };
+
     return {
+      game,
+
       type,
       isOnline,
 
@@ -110,6 +143,10 @@ export default defineComponent({
       clearAddPlayer,
       addPlayer,
 
+      rows,
+      cols,
+      startGame,
+
       Colors,
       icons: {
         add: addIcon,
@@ -120,7 +157,9 @@ export default defineComponent({
 </script>
 
 <template>
-  <main class="flex justify-center items-center p-5">
+  <main class="flex flex-col justify-center items-center p-5">
+    <c-gradient-heading class="mb-8">Waiting Room</c-gradient-heading>
+
     <div class="max-w-4xl w-full flex flex-col gap-5">
       <div class="w-full">
         <p class="text-bg-dark text-lg font-mono font-semibold mb-2 opacity-60">
@@ -129,14 +168,16 @@ export default defineComponent({
 
         <div class="flex flex-wrap gap-4">
           <c-player
+            v-for="p of game.players"
+            :key="p.id"
+            :username="p.username"
+            :color="p.color"
+            :isHost="p === game.getHost()"
             class="h-20 flex-grow"
-            username="xd Freddie"
-            :color="Colors.BLUE"
-            isHost
           />
 
           <c-button-icon
-            class="h-20 flex-grow"
+            class="h-20 flex-grow min-w-[16rem]"
             :icon="icons.add"
             @click="showAddPlayerModal = true"
           >
@@ -191,6 +232,56 @@ export default defineComponent({
           </div>
         </button>
       </div>
+
+      <div v-if="!isOnline" class="w-full flex flex-col gap-4">
+        <p
+          class="text-bg-dark text-lg font-mono font-semibold opacity-60 -mb-2"
+        >
+          Room Controls
+        </p>
+
+        <div>
+          <p class="text-t-sub font-medium">Rows</p>
+          <vue3-slider
+            color="var(--accent-500)"
+            trackColor="var(--b-dark-dark)"
+            tooltipColor="var(--bg-dark)"
+            tooltipTextColor="var(--bg-light)"
+            sticky
+            :height="12"
+            tooltip
+            steps
+            :min="4"
+            :max="10"
+            v-model="rows"
+          />
+        </div>
+
+        <div>
+          <p class="text-t-sub font-medium">Columns</p>
+          <vue3-slider
+            color="var(--accent-500)"
+            trackColor="var(--b-dark-dark)"
+            tooltipColor="var(--bg-dark)"
+            tooltipTextColor="var(--bg-light)"
+            sticky
+            :height="12"
+            tooltip
+            steps
+            :min="4"
+            :max="10"
+            v-model="cols"
+          />
+        </div>
+
+        <c-button
+          v-if="game.getPlayerCount() >= 2"
+          class="h-20 w-full"
+          @click="startGame"
+        >
+          Start Game
+        </c-button>
+      </div>
     </div>
 
     <c-modal
@@ -203,9 +294,9 @@ export default defineComponent({
         @submit.prevent="addPlayer"
         class="w-full flex flex-col justify-center items-center gap-4"
       >
-        <c-gradient-heading class="mb-2" :size="6"
-          >Add Player</c-gradient-heading
-        >
+        <c-gradient-heading class="mb-2" :size="6">
+          Add Player
+        </c-gradient-heading>
 
         <c-input-text
           classes="w-full"

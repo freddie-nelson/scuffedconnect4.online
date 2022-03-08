@@ -1,3 +1,4 @@
+import Game from "@shared/game";
 import { createStore, useStore as vuexUseStore } from "vuex";
 
 export interface Toast {
@@ -8,6 +9,7 @@ export interface Toast {
 export interface State {
   toastQueue: Toast[];
   theme: string;
+  game?: Game;
 }
 
 export default createStore<State>({
@@ -26,6 +28,10 @@ export default createStore<State>({
     SET_THEME(state, theme: string) {
       state.theme = theme;
       localStorage.setItem("theme", theme);
+    },
+
+    RESET_GAME(state) {
+      state.game = new Game();
     },
   },
   actions: {},

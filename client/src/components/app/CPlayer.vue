@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from "vue";
 import { useResizeObserver } from "@vueuse/core";
-import { Colors, hex } from "@game/colors";
+import { Colors, hex } from "@shared/colors";
 
 import { Icon } from "@iconify/vue";
 import playingIcon from "@iconify-icons/feather/play";

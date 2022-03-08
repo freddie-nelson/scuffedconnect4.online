@@ -17,7 +17,7 @@
     "types": ["webpack-env", "resize-observer-browser"],
     "paths": {
       "@/*": ["src/*"],
-      "@game/*": ["../game/*"]
+      "@shared/*": ["../shared/*"]
     },
     "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
   },
@@ -27,7 +27,7 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx",
-    "../game/**/*.ts"
+    "../shared/**/*.ts"
   ],
   "exclude": ["node_modules"]
 }

@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "target": "es6",
+    "module": "commonjs",
+    "rootDirs": ["./server", "./modules"],
+    "outDir": "./build",
+    "esModuleInterop": true,
+    "strict": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@game/*": ["../shared/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "tests/**/*.ts", "../shared/**/*.ts"],
+  "exclude": ["node_modules"]
+}
