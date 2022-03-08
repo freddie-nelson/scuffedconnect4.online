@@ -1,12 +1,24 @@
 import { Colors } from "./colors";
 import Player from "./player";
 
-export default class Game {
-  private host: Player | undefined;
-  private players: Player[] = [];
+export interface Slot {
+  color: Colors | null;
+  win: boolean;
+  row: number;
+  col: number;
+}
 
-  private rows = 6;
-  private cols = 7;
+export default class Game {
+  protected host: Player | undefined;
+  protected players: Player[] = [];
+
+  protected playing: Player | undefined;
+
+  protected winner: Player | undefined;
+  protected winningSlots: Slot[] = [];
+
+  protected rows = 6;
+  protected cols = 7;
 
   /**
    * 2D array is column major indexed, uses (c, r) indexing.
@@ -15,12 +27,13 @@ export default class Game {
    *
    * This is for easier placement of pieces into the board.
    */
-  private grid: (Colors | null)[][] = [];
+  protected grid: (Colors | null)[][] = [];
 
   constructor(host?: Player) {
     this.host = host;
   }
 
+  // player methods
   addPlayer(player: Player) {
     if (!this.host) this.host = player;
 
@@ -31,7 +44,7 @@ export default class Game {
   }
 
   removePlayer(player: Player) {
-    const i = this.players.findIndex((p) => p === player);
+    const i = this.findIndexOfPlayer(player);
     if (i === -1) return;
 
     this.players.splice(i, 1);
@@ -42,18 +55,40 @@ export default class Game {
     }
   }
 
+  findIndexOfPlayer(player: Player) {
+    return this.players.findIndex((p) => p === player);
+  }
+
   findPlayerByColor(color: Colors) {
     return this.players.find((p) => p.color === color);
   }
 
-  getPlayerCount() {
-    return this.players.length;
+  /**
+   * Gets the player after the given player.
+   *
+   * @param player The player before the desired player
+   */
+  getNextPlayer(player: Player) {
+    const i = this.findIndexOfPlayer(player);
+    if (i === -1) return;
+
+    const nextI = i + 1 >= this.getPlayerCount() ? 0 : i + 1;
+    return this.players[nextI];
   }
 
   getHost() {
     return this.host;
   }
 
+  getPlaying() {
+    return this.playing;
+  }
+
+  getPlayerCount() {
+    return this.players.length;
+  }
+
+  // grid methods
   createGrid() {
     this.grid = [];
 
@@ -68,10 +103,187 @@ export default class Game {
     }
   }
 
+  /**
+   * Gets the grid as a flat array of objects.
+   *
+   * Reverses the rows before flattening, i.e. bottom row becomes top.
+   *
+   * The original row and column are stored as properties on the objects.
+   */
+  getSlots() {
+    const slots: Slot[] = [];
+
+    for (let c = 0; c < this.cols; c++) {
+      for (let r = this.rows - 1; r >= 0; r--) {
+        slots.push({
+          color: this.grid[c][r],
+          win: this.winningSlots.findIndex((s) => s.row === r && s.col === c) !== -1,
+          col: c,
+          row: r,
+        });
+      }
+    }
+
+    return slots;
+  }
+
   setGridSize(rows: number, cols: number) {
     this.rows = rows;
     this.cols = cols;
 
     this.createGrid();
+  }
+
+  getRows() {
+    return this.rows;
+  }
+
+  getCols() {
+    return this.cols;
+  }
+
+  // game methods
+  start() {
+    this.createGrid();
+
+    // pick random player to start
+    this.playing = this.players[Math.floor(Math.random() * this.getPlayerCount())];
+  }
+
+  nextTurn() {
+    if (!this.playing) return;
+
+    const win = this.checkForWin();
+    if (win) {
+      return;
+    }
+
+    // move turn to next player
+    this.playing = this.getNextPlayer(this.playing);
+  }
+
+  checkForWin(): boolean {
+    for (const p of this.players) {
+      const win = this.areFourConnected(p.color);
+      if (win) {
+        this.winner = p;
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  dropPiece(player: Player, col: number) {
+    if (col < 0 || col >= this.cols || this.findIndexOfPlayer(player) === -1 || player !== this.playing)
+      return;
+
+    const column = this.grid[col];
+    const i = column.findIndex((r) => r === null);
+    if (i === -1) return;
+
+    column[i] = player.color;
+
+    this.nextTurn();
+  }
+
+  protected areFourConnected(c: Colors): boolean {
+    const rows = this.getRows();
+    const cols = this.getCols();
+
+    // horizontal check
+    for (let j = 0; j < rows - 3; j++) {
+      for (let i = 0; i < cols; i++) {
+        if (
+          this.grid[i][j] == c &&
+          this.grid[i][j + 1] == c &&
+          this.grid[i][j + 2] == c &&
+          this.grid[i][j + 3] == c
+        ) {
+          this.winningSlots = [];
+          for (let k = 0; k <= 3; k++) {
+            this.winningSlots.push({
+              color: c,
+              win: true,
+              row: j + k,
+              col: i,
+            });
+          }
+
+          return true;
+        }
+      }
+    }
+    // vertical check
+    for (let i = 0; i < cols - 3; i++) {
+      for (let j = 0; j < rows; j++) {
+        if (
+          this.grid[i][j] == c &&
+          this.grid[i + 1][j] == c &&
+          this.grid[i + 2][j] == c &&
+          this.grid[i + 3][j] == c
+        ) {
+          this.winningSlots = [];
+          for (let k = 0; k <= 3; k++) {
+            this.winningSlots.push({
+              color: c,
+              win: true,
+              row: j,
+              col: i + k,
+            });
+          }
+
+          return true;
+        }
+      }
+    }
+    // ascending diagonal check
+    for (let i = 3; i < cols; i++) {
+      for (let j = 0; j < rows - 3; j++) {
+        if (
+          this.grid[i][j] == c &&
+          this.grid[i - 1][j + 1] == c &&
+          this.grid[i - 2][j + 2] == c &&
+          this.grid[i - 3][j + 3] == c
+        ) {
+          this.winningSlots = [];
+          for (let k = 0; k <= 3; k++) {
+            this.winningSlots.push({
+              color: c,
+              win: true,
+              row: j + k,
+              col: i - k,
+            });
+          }
+
+          return true;
+        }
+      }
+    }
+    // descending diagonal check
+    for (let i = 3; i < cols; i++) {
+      for (let j = 3; j < rows; j++) {
+        if (
+          this.grid[i][j] == c &&
+          this.grid[i - 1][j - 1] == c &&
+          this.grid[i - 2][j - 2] == c &&
+          this.grid[i - 3][j - 3] == c
+        ) {
+          this.winningSlots = [];
+          for (let k = 0; k <= 3; k++) {
+            this.winningSlots.push({
+              color: c,
+              win: true,
+              row: j - k,
+              col: i + k,
+            });
+          }
+
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 }

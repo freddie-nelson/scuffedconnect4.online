@@ -28,6 +28,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    upNext: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const colorEl = ref(document.createElement("div"));
@@ -64,9 +68,17 @@ export default defineComponent({
     ></div>
 
     <div
-      class="flex flex-col ml-4 text-bg-light font-semibold text-lg font-mono"
+      class="
+        flex flex-col
+        ml-4
+        text-bg-light
+        font-semibold
+        text-lg
+        font-mono
+        max-w-[40%]
+      "
     >
-      <p>
+      <p class="whitespace-nowrap text-ellipsis overflow-hidden w-full">
         {{ username }}
       </p>
 
@@ -88,6 +100,13 @@ export default defineComponent({
     >
       <p class="font-semibold font-mono">Playing</p>
       <Icon :icon="icons.playing" class="h-7 w-7 hidden" />
+    </div>
+
+    <div
+      v-if="upNext"
+      class="flex items-center gap-1 text-accent-500 ml-auto mr-4 opacity-70"
+    >
+      <p class="font-semibold font-mono">Up Next</p>
     </div>
   </div>
 </template>
