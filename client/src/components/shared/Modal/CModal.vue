@@ -11,6 +11,7 @@
         justify-center
         items-center
         bg-transparent
+        z-50
       "
     >
       <div
@@ -30,8 +31,7 @@
             hover:text-primary-500
             transition-colors
             duration-300
-            focus:text-primary-800
-            focus:outline-none
+            focus:text-primary-800 focus:outline-none
           "
           @click="$emit('close')"
         >

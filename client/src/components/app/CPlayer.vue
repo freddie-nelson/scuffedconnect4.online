@@ -32,6 +32,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    winner: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const colorEl = ref(document.createElement("div"));
@@ -88,7 +92,7 @@ export default defineComponent({
     <div
       v-if="isPlaying"
       class="
-        playing-text
+        glowing-text
         flex
         items-center
         gap-1
@@ -108,11 +112,27 @@ export default defineComponent({
     >
       <p class="font-semibold font-mono">Up Next</p>
     </div>
+
+    <div
+      v-if="winner"
+      class="
+        glowing-text
+        flex
+        items-center
+        gap-1
+        text-accent-500
+        ml-auto
+        mr-4
+        animate-pulse
+      "
+    >
+      <p class="font-semibold font-mono">Winner</p>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
-.playing-text {
+.glowing-text {
   filter: drop-shadow(0 0 14px currentColor) drop-shadow(0 0 3px currentColor);
 }
 </style>

@@ -84,6 +84,10 @@ export default class Game {
     return this.playing;
   }
 
+  getWinner() {
+    return this.winner;
+  }
+
   getPlayerCount() {
     return this.players.length;
   }
@@ -155,6 +159,7 @@ export default class Game {
 
     const win = this.checkForWin();
     if (win) {
+      this.playing = undefined;
       return;
     }
 
@@ -275,7 +280,7 @@ export default class Game {
               color: c,
               win: true,
               row: j - k,
-              col: i + k,
+              col: i - k,
             });
           }
 
