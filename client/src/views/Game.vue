@@ -103,13 +103,14 @@ export default defineComponent({
       <!-- picker -->
       <div
         v-if="playing"
+        id="picker"
         class="
           picker
           absolute
           opacity-60
           transform
           transition-transform
-          duration-50
+          duration-100
         "
         :style="{ '--tw-translate-x': `${pickerTranslate}px` }"
       >
@@ -131,6 +132,7 @@ export default defineComponent({
           <c-grid-slot
             v-for="(slot, i) of game.getSlots()"
             :key="i"
+            :mask="i === 0"
             @click="dropPiece(slot.col)"
           />
         </div>

@@ -4,6 +4,12 @@ import { defineComponent } from "vue";
 export default defineComponent({
   name: "CGridSlot",
   components: {},
+  props: {
+    mask: {
+      type: Boolean,
+      default: false,
+    },
+  },
 });
 </script>
 
@@ -12,7 +18,7 @@ export default defineComponent({
     viewbox="0 0 10 10"
     class="slot w-full h-full flex justify-center items-center relative"
   >
-    <mask id="slotMask">
+    <mask v-if="mask" id="slotMask">
       <rect width="100%" height="100%" fill="white" />
 
       <circle cx="50%" cy="50%" r="40%" fill="black" />
