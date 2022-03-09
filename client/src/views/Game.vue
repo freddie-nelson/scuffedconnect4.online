@@ -1,17 +1,26 @@
 <script lang="ts">
-import CPlayer from "@/components/app/CPlayer.vue";
-import CGridPiece from "@/components/app/Game/CGridPiece.vue";
-import CGridSlot from "@/components/app/Game/CGridSlot.vue";
 import { useStore } from "@/store";
 import { Colors } from "@shared/colors";
 import Game, { Slot } from "@shared/game";
 import { useMouseInElement } from "@vueuse/core";
-import { computed, defineComponent, onBeforeMount, ref } from "vue";
+import {
+  computed,
+  ComputedRef,
+  defineComponent,
+  onBeforeMount,
+  ref,
+  watch,
+} from "vue";
 import { useRouter } from "vue-router";
+
+import CPlayer from "@/components/app/CPlayer.vue";
+import CGridPiece from "@/components/app/Game/CGridPiece.vue";
+import CGridSlot from "@/components/app/Game/CGridSlot.vue";
+import CGridOverlay from "@/components/app/Game/CGridOverlay.vue";
 
 export default defineComponent({
   name: "Game",
-  components: { CPlayer, CGridSlot, CGridPiece },
+  components: { CPlayer, CGridSlot, CGridPiece, CGridOverlay },
   setup() {
     const router = useRouter();
     const store = useStore();
@@ -25,31 +34,45 @@ export default defineComponent({
 
         game.value.addPlayer({
           id: "13435345",
-          username: "Freddie",
+          username: "Player",
           color: Colors.RED,
         });
         game.value.addPlayer({
           id: "5674783",
-          username: "Andrew",
+          username: "Opponent",
           color: Colors.BLUE,
         });
-
-        game.value.start();
       }
 
       if (!game.value || game.value.getPlayerCount() < 2)
         return router.push({ name: "Home" });
+
+      game.value.start();
     });
 
     const rows = computed(() => game.value.getRows());
     const cols = computed(() => game.value.getCols());
 
-    const playing = computed(() => game.value.getPlaying());
+    const playing = computed(() => game.value?.getPlaying());
     const nextPlaying = computed(() =>
       playing.value ? game.value.getNextPlayer(playing.value) : undefined
     );
 
-    const winner = computed(() => game.value.getWinner());
+    const showPlayingOverlay = ref(false);
+    watch(playing, (playing) => {
+      if (!playing) return;
+
+      showPlayingOverlay.value = true;
+    });
+
+    const winner = computed(() => game.value?.getWinner());
+
+    const showWinnerOverlay = ref(false);
+    watch(winner, (winner) => {
+      if (!winner) return;
+
+      showWinnerOverlay.value = true;
+    });
 
     const pickerSlot = computed<Slot>(() => {
       return {
@@ -63,7 +86,9 @@ export default defineComponent({
     const gridEl = ref<HTMLDivElement>();
     const mouseInGrid = useMouseInElement(gridEl);
 
-    const pickerTranslate = computed(() => {
+    const pickerTranslate: ComputedRef<number> = computed<number>(() => {
+      if (showPlayingOverlay.value) return pickerTranslate.value;
+
       const colWidth = mouseInGrid.elementWidth.value / cols.value;
       const col = Math.floor(mouseInGrid.elementX.value / colWidth);
 
@@ -86,7 +111,10 @@ export default defineComponent({
 
       playing,
       nextPlaying,
+      showPlayingOverlay,
+
       winner,
+      showWinnerOverlay,
 
       gridEl,
       pickerSlot,
@@ -136,6 +164,27 @@ export default defineComponent({
             @click="dropPiece(slot.col)"
           />
         </div>
+
+        <!-- playing card overlay -->
+        <c-grid-overlay
+          v-if="showPlayingOverlay"
+          :player="playing"
+          @click="showPlayingOverlay = false"
+          @animationend="showPlayingOverlay = false"
+          class="playing-overlay"
+        >
+          <template v-slot:tag>Now Playing</template>
+        </c-grid-overlay>
+
+        <!-- winner card overlay -->
+        <c-grid-overlay
+          v-if="showWinnerOverlay"
+          :player="winner"
+          winner
+          class="winner-overlay"
+        >
+          <template v-slot:tag>Well Done!</template>
+        </c-grid-overlay>
       </div>
 
       <div class="h-16 w-full flex gap-4">
@@ -203,5 +252,45 @@ $grid-height: calc($grid-width * (v-bind(rows) / v-bind(cols)));
   grid-template-rows: repeat(v-bind(rows), 1fr);
   grid-template-columns: repeat(v-bind(cols), 1fr);
   grid-auto-flow: column;
+}
+
+.playing-overlay {
+  opacity: 0;
+  animation: fade-in-out 2.4s ease-in-out;
+  animation-fill-mode: forwards;
+
+  @keyframes fade-in-out {
+    from {
+      opacity: 0;
+    }
+
+    30% {
+      opacity: 1;
+    }
+
+    70% {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+}
+
+.winner-overlay {
+  opacity: 0;
+  animation: fade-in 1s ease-in;
+  animation-fill-mode: forwards;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
 }
 </style>

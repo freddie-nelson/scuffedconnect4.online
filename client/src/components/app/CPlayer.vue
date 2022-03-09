@@ -64,7 +64,17 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="flex items-center rounded-lg bg-bg-dark p-2.5 min-w-[16rem]">
+  <div
+    class="
+      flex
+      items-center
+      rounded-lg
+      bg-bg-dark
+      p-2.5
+      min-w-[16rem]
+      select-none
+    "
+  >
     <div
       ref="colorEl"
       class="rounded-full h-full"
