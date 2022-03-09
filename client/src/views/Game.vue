@@ -114,7 +114,7 @@ export default defineComponent({
         "
         :style="{ '--tw-translate-x': `${pickerTranslate}px` }"
       >
-        <c-grid-piece :gridSlot="pickerSlot" />
+        <c-grid-piece :gridSlot="pickerSlot" noAnim />
       </div>
 
       <div ref="gridEl" class="grid-container">

@@ -12,6 +12,10 @@ export default defineComponent({
       type: Object as () => Slot,
       required: true,
     },
+    noAnim: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props) {
     const store = useStore();
@@ -33,16 +37,12 @@ export default defineComponent({
     const translate = ref(0);
 
     watch(color, () => {
-      if (color.value === null || !pieceEl.value) return;
+      if (props.noAnim || color.value === null || !pieceEl.value) return;
 
       const rect = pieceEl.value.getBoundingClientRect();
       const centerY = rect.top + rect.height / 2;
 
-      const picker = document.getElementById("picker");
-      if (!picker) return;
-
-      const pickerRect = picker.getBoundingClientRect();
-      const pickerY = pickerRect.top + pickerRect.height / 2;
+      const pickerY = centerY - rect.height * (rows.value - row.value - 1);
 
       translate.value = pickerY - centerY;
       requestAnimationFrame(() => (translate.value = 0));
