@@ -2,17 +2,23 @@
 import {
   computed,
   defineComponent,
-  nextTick,
   onBeforeMount,
+  onUnmounted,
   ref,
   watch,
+  watchEffect,
+  watchPostEffect,
 } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
 import { useStore } from "@/store";
 
 import { Colors, hex } from "@shared/colors";
+import Socket from "@/api/socket";
 
 import addIcon from "@iconify-icons/feather/user";
+
+import Vue3Slider from "vue3-slider";
 
 import CPlayer from "@/components/app/CPlayer.vue";
 import CButtonIcon from "@/components/shared/Button/CButtonIcon.vue";
@@ -21,8 +27,8 @@ import CButton from "@/components/shared/Button/CButton.vue";
 import CGradientHeading from "@/components/shared/Heading/CGradientHeading.vue";
 import CInputText from "@/components/shared/Input/CInputText.vue";
 import CInputDropdown from "@/components/shared/Input/CInputDropdown.vue";
-import Vue3Slider from "vue3-slider";
-import { storeToRefs } from "pinia";
+import CSpinnerCircle from "@/components/shared/Spinner/CSpinnerCircle.vue";
+import Player from "@shared/player";
 
 export default defineComponent({
   name: "Room",
@@ -35,6 +41,7 @@ export default defineComponent({
     CInputText,
     CInputDropdown,
     Vue3Slider,
+    CSpinnerCircle,
   },
   setup() {
     const router = useRouter();
@@ -42,18 +49,18 @@ export default defineComponent({
     const store = useStore();
 
     const { game, socket } = storeToRefs(store);
-    onBeforeMount(() => {
-      store.resetGame();
-    });
-
-    watch(socket, () => {
-      console.log(socket.value?.isConnected);
-    });
 
     const type = ref("local");
     const isOnline = computed(() => type.value === "online");
 
-    const roomCode = ref("abc123");
+    const roomCode = computed(
+      () => socket.value?.roomCode || (route.query.code as string) || ""
+    );
+    watch(roomCode, (code) => {
+      if (!code) return;
+
+      router.replace({ name: "Room", query: { code } });
+    });
 
     onBeforeMount(() => {
       if (route.params.type && typeof route.params.type === "string") {
@@ -64,11 +71,37 @@ export default defineComponent({
         route.params.type = "online";
         type.value = "online";
 
-        roomCode.value = route.query.code;
+        // roomCode.value = route.query.code;
       }
 
       if (type.value === "online") {
-        store.createSocket();
+        if (!store.socket) store.createSocket();
+      } else if (type.value === "local") {
+        console.log("local");
+      }
+
+      store.resetGame();
+    });
+
+    onBeforeRouteLeave((to) => {
+      if (!socket.value || !isOnline.value) return;
+
+      if (to.name !== "Game") socket.value.leaveRoom();
+    });
+
+    const isConnected = computed(() => socket.value?.isConnected || false);
+    watch([isConnected, isOnline], () => {
+      if (!isOnline.value || !socket.value) return;
+
+      if (isConnected.value) {
+        if (roomCode.value) socket.value.joinRoom(roomCode.value);
+        else socket.value.createRoom();
+      } else {
+        router.push({ name: "Home" });
+        store.addToast({
+          text: "Could not connect to game server!",
+          duration: 1500,
+        });
       }
     });
 
@@ -122,15 +155,19 @@ export default defineComponent({
     const addPlayer = () => {
       if (!addPlayerDetails.value.username) return;
 
+      const player: Player = {
+        id: Math.random().toString().split(".")[1],
+        username: addPlayerDetails.value.username,
+        // @ts-expect-error this works
+        color: Colors[addPlayerDetails.value.color.toUpperCase()],
+      };
+
       if (type.value === "local") {
-        game.value?.addPlayer({
-          id: Math.random().toString().split(".")[1],
-          username: addPlayerDetails.value.username,
-          // @ts-expect-error this works
-          color: Colors[addPlayerDetails.value.color.toUpperCase()],
-        });
+        game.value?.addPlayer(player);
       } else {
-        console.log("add player online");
+        if (!socket.value || !isConnected.value) return;
+
+        socket.value.addPlayer(player);
       }
 
       clearAddPlayer();
@@ -139,11 +176,23 @@ export default defineComponent({
     const rows = ref(6);
     const cols = ref(7);
 
+    watch([rows, cols], () => {
+      if (!socket.value || !isOnline.value) return;
+
+      socket.value.setGridSize(rows.value, cols.value);
+    });
+
     const startGame = () => {
       if (!game.value || game.value.getPlayerCount() < 2) return;
 
-      game.value.setGridSize(rows.value, cols.value);
-      router.push({ name: "Game" });
+      if (type.value === "local") {
+        game.value.setGridSize(rows.value, cols.value);
+        router.push({ name: "Game" });
+      } else {
+        if (!socket.value || !isConnected.value) return;
+
+        socket.value.startGame();
+      }
     };
 
     return {
@@ -210,7 +259,7 @@ export default defineComponent({
         </div>
       </div>
 
-      <div v-if="isOnline" class="w-full">
+      <div v-if="isOnline && roomCode" class="w-full">
         <p class="text-bg-dark text-lg font-mono font-semibold mb-2 opacity-60">
           Room Code
         </p>
@@ -257,7 +306,10 @@ export default defineComponent({
         </button>
       </div>
 
-      <div v-if="!isOnline" class="w-full flex flex-col gap-4">
+      <div
+        v-if="!isOnline || socket.isRoomOwner"
+        class="w-full flex flex-col gap-4"
+      >
         <p
           class="text-bg-dark text-lg font-mono font-semibold opacity-60 -mb-2"
         >
@@ -346,6 +398,13 @@ export default defineComponent({
         <c-button type="submit" class="h-16 w-full">Add Player</c-button>
       </form>
     </c-modal>
+  </main>
+
+  <main v-else class="flex flex-col gap-8 justify-center items-center">
+    <c-spinner-circle class="transform scale-75" />
+    <p class="text-bg-dark font-mono text-2xl font-semibold text-center">
+      Connecting to server...
+    </p>
   </main>
 </template>
 

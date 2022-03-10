@@ -20,6 +20,10 @@ export default class Game {
   protected rows = 6;
   protected cols = 7;
 
+  protected started = false;
+
+  isOnline = false;
+
   /**
    * 2D array is column major indexed, uses (c, r) indexing.
    *
@@ -38,14 +42,15 @@ export default class Game {
     if (!this.host) this.host = player;
 
     // color is taken
-    if (this.findPlayerByColor(player.color)) return;
+    if (this.findPlayerByColor(player.color) || this.findIndexOfPlayer(player) !== -1) return false;
 
     this.players.push(player);
+    return true;
   }
 
   removePlayer(player: Player) {
     const i = this.findIndexOfPlayer(player);
-    if (i === -1) return;
+    if (i === -1) return false;
 
     this.players.splice(i, 1);
 
@@ -53,10 +58,16 @@ export default class Game {
     if (player === this.host) {
       this.host = this.players[Math.floor(Math.random() * this.players.length)];
     }
+
+    return true;
   }
 
   findIndexOfPlayer(player: Player) {
-    return this.players.findIndex((p) => p === player);
+    return this.players.findIndex((p) => p.id === player.id);
+  }
+
+  findPlayerById(player: Player) {
+    return this.players.find((p) => p.id === player.id);
   }
 
   findPlayerByColor(color: Colors) {
@@ -132,10 +143,15 @@ export default class Game {
   }
 
   setGridSize(rows: number, cols: number) {
-    this.rows = rows;
-    this.cols = cols;
+    if (rows > 0 && cols > 0 && rows <= 10 && cols <= 10) {
+      this.rows = rows;
+      this.cols = cols;
 
-    this.createGrid();
+      this.createGrid();
+      return true;
+    }
+
+    return false;
   }
 
   getRows() {
@@ -147,11 +163,22 @@ export default class Game {
   }
 
   // game methods
-  start() {
+  start(playing?: Player) {
+    if (this.playing || this.winner) return false;
+
+    this.started = true;
     this.createGrid();
 
     // pick random player to start
-    this.playing = this.players[Math.floor(Math.random() * this.getPlayerCount())];
+    this.playing = playing
+      ? this.players[this.findIndexOfPlayer(playing)]
+      : this.players[Math.floor(Math.random() * this.getPlayerCount())];
+
+    return true;
+  }
+
+  hasStarted() {
+    return this.started;
   }
 
   nextTurn() {
@@ -180,8 +207,13 @@ export default class Game {
   }
 
   dropPiece(player: Player, col: number) {
-    if (col < 0 || col >= this.cols || this.findIndexOfPlayer(player) === -1 || player !== this.playing)
-      return;
+    if (
+      col < 0 ||
+      col >= this.cols ||
+      this.findIndexOfPlayer(player) === -1 ||
+      player.id !== this.playing?.id
+    )
+      return false;
 
     const column = this.grid[col];
     const i = column.findIndex((r) => r === null);
@@ -190,6 +222,7 @@ export default class Game {
     column[i] = player.color;
 
     this.nextTurn();
+    return true;
   }
 
   protected areFourConnected(c: Colors): boolean {

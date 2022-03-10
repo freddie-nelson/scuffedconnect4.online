@@ -17,6 +17,7 @@ import CPlayer from "@/components/app/CPlayer.vue";
 import CGridPiece from "@/components/app/Game/CGridPiece.vue";
 import CGridSlot from "@/components/app/Game/CGridSlot.vue";
 import CGridOverlay from "@/components/app/Game/CGridOverlay.vue";
+import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "Game",
@@ -25,37 +26,40 @@ export default defineComponent({
     const router = useRouter();
     const store = useStore();
 
-    const TEST = true;
+    const TEST = false;
 
-    const game = computed(() => store.game as Game);
+    const { game, socket } = storeToRefs(store);
+
     onBeforeMount(() => {
       if (TEST && !store.game) {
         store.resetGame();
 
-        game.value.addPlayer({
+        game.value?.addPlayer({
           id: "13435345",
           username: "Player",
           color: Colors.RED,
         });
-        game.value.addPlayer({
+        game.value?.addPlayer({
           id: "5674783",
           username: "Opponent",
           color: Colors.BLUE,
         });
+
+        game.value?.start();
       }
 
       if (!game.value || game.value.getPlayerCount() < 2)
         return router.push({ name: "Home" });
 
-      game.value.start();
+      if (!game.value.isOnline) game.value.start();
     });
 
-    const rows = computed(() => game.value.getRows());
-    const cols = computed(() => game.value.getCols());
+    const rows = computed(() => game.value?.getRows() || 6);
+    const cols = computed(() => game.value?.getCols() || 7);
 
     const playing = computed(() => game.value?.getPlaying());
     const nextPlaying = computed(() =>
-      playing.value ? game.value.getNextPlayer(playing.value) : undefined
+      playing.value ? game.value?.getNextPlayer(playing.value) : undefined
     );
 
     const showPlayingOverlay = ref(false);
@@ -99,9 +103,15 @@ export default defineComponent({
     });
 
     const dropPiece = (col: number) => {
-      if (!playing.value) return;
+      if (!game.value || !playing.value) return;
 
-      game.value.dropPiece(playing.value, col);
+      if (game.value.isOnline) {
+        if (!socket.value || !socket.value.canPlay) return;
+
+        socket.value.dropPiece(playing.value, col);
+      } else {
+        game.value.dropPiece(playing.value, col);
+      }
     };
 
     return {

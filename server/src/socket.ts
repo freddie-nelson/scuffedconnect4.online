@@ -3,23 +3,100 @@ import { RateLimiter } from "limiter";
 
 import Filter from "bad-words";
 import Room from "./Room";
+import Player from "@shared/player";
 const filter = new Filter();
 
 const rooms: { [index: string]: Room } = {};
 const publicRooms: { host: string; code: string; maxPlayers: number; playerCount: number }[] = [];
 
 export default function (socket: Socket) {
-  const createRoom = () => {};
-  const joinRoom = () => {};
-  const leaveRoom = () => {};
+  const store: {
+    room?: Room;
+  } = {
+    room: undefined,
+  };
+
+  const joinRoom = (code: string) => {
+    if (store.room) return;
+
+    const room = rooms[code];
+    if (!room || room.hasStarted()) {
+      socket.emit("room:notfound");
+      return;
+    }
+
+    store.room = room;
+    socket.emit("room:joined", room.code);
+
+    room.addSocket(socket);
+  };
+
+  const leaveRoom = () => {
+    const room = store.room;
+    if (!room) return;
+
+    store.room = undefined;
+    room.removeSocket(socket);
+
+    if (room.getSocketCount() === 0) {
+      delete rooms[room.code];
+      console.log("delete " + room.code);
+    }
+
+    socket.emit("room:left");
+  };
+
+  const createRoom = () => {
+    if (store.room) return;
+
+    const room = new Room(socket);
+    rooms[room.code] = room;
+
+    socket.emit("room:created", room.code);
+
+    joinRoom(room.code);
+  };
 
   socket.on("disconnect", leaveRoom);
 
-  socket.on("create-room", createRoom);
+  socket.on("room:create", createRoom);
 
-  socket.on("join-room", joinRoom);
+  socket.on("room:join", joinRoom);
 
-  socket.on("leave-room", leaveRoom);
+  socket.on("room:leave", leaveRoom);
+
+  // game events
+  socket.on("game:start", () => {
+    if (!store.room || socket !== store.room.owner) return;
+
+    if (store.room.start()) store.room.emitAll("game:start", store.room.getPlaying());
+  });
+
+  socket.on("game:addplayer", (p: Player) => {
+    if (!store.room) return;
+
+    if (store.room.addPlayer({ ...p, socketId: socket.id })) store.room.emitAll("game:addplayer", p);
+  });
+
+  socket.on("game:removeplayer", (p: Player) => {
+    if (!store.room) return;
+
+    if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
+  });
+
+  socket.on("game:droppiece", (p: Player, col: number) => {
+    if (!store.room || store.room.findPlayerById(p)?.socketId !== socket.id) return;
+
+    if (store.room.dropPiece(p, col)) {
+      store.room.emitAll("game:droppiece", p, col);
+    }
+  });
+
+  socket.on("game:gridsize", (rows: number, cols: number) => {
+    if (!store.room) return;
+
+    if (store.room.setGridSize(rows, cols)) store.room.emitAll("game:gridsize", rows, cols);
+  });
 
   const messageLimiter = new RateLimiter({ tokensPerInterval: 30, interval: "minute" });
 
