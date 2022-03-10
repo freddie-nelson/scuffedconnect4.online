@@ -27,10 +27,10 @@ export default defineComponent({
 
     const TEST = true;
 
-    const game = computed(() => store.state.game as Game);
+    const game = computed(() => store.game as Game);
     onBeforeMount(() => {
-      if (TEST && !store.state.game) {
-        store.commit("RESET_GAME");
+      if (TEST && !store.game) {
+        store.resetGame();
 
         game.value.addPlayer({
           id: "13435345",
@@ -256,7 +256,7 @@ $grid-height: calc($grid-width * (v-bind(rows) / v-bind(cols)));
 
 .playing-overlay {
   opacity: 0;
-  animation: fade-in-out 2.4s ease-in-out;
+  animation: fade-in-out 1.8s ease-in-out;
   animation-fill-mode: forwards;
 
   @keyframes fade-in-out {

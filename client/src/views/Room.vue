@@ -1,5 +1,12 @@
 <script lang="ts">
-import { computed, defineComponent, onBeforeMount, ref } from "vue";
+import {
+  computed,
+  defineComponent,
+  nextTick,
+  onBeforeMount,
+  ref,
+  watch,
+} from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useStore } from "@/store";
 
@@ -15,6 +22,7 @@ import CGradientHeading from "@/components/shared/Heading/CGradientHeading.vue";
 import CInputText from "@/components/shared/Input/CInputText.vue";
 import CInputDropdown from "@/components/shared/Input/CInputDropdown.vue";
 import Vue3Slider from "vue3-slider";
+import { storeToRefs } from "pinia";
 
 export default defineComponent({
   name: "Room",
@@ -33,9 +41,13 @@ export default defineComponent({
     const route = useRoute();
     const store = useStore();
 
-    const game = computed(() => store.state.game);
+    const { game, socket } = storeToRefs(store);
     onBeforeMount(() => {
-      store.commit("RESET_GAME");
+      store.resetGame();
+    });
+
+    watch(socket, () => {
+      console.log(socket.value?.isConnected);
     });
 
     const type = ref("local");
@@ -54,6 +66,10 @@ export default defineComponent({
 
         roomCode.value = route.query.code;
       }
+
+      if (type.value === "online") {
+        store.createSocket();
+      }
     });
 
     const copyRoomCode = () => {
@@ -63,13 +79,13 @@ export default defineComponent({
       navigator.clipboard
         .writeText(url.href)
         .then(() => {
-          store.commit("ADD_TOAST", {
+          store.addToast({
             text: "Copied to clipboard!",
             duration: 1500,
           });
         })
         .catch(() => {
-          store.commit("ADD_TOAST", {
+          store.addToast({
             text: "Error while copying to clipboard.",
             duration: 1500,
           });
@@ -106,12 +122,16 @@ export default defineComponent({
     const addPlayer = () => {
       if (!addPlayerDetails.value.username) return;
 
-      game.value?.addPlayer({
-        id: Math.random().toString().split(".")[1],
-        username: addPlayerDetails.value.username,
-        // @ts-expect-error this works
-        color: Colors[addPlayerDetails.value.color.toUpperCase()],
-      });
+      if (type.value === "local") {
+        game.value?.addPlayer({
+          id: Math.random().toString().split(".")[1],
+          username: addPlayerDetails.value.username,
+          // @ts-expect-error this works
+          color: Colors[addPlayerDetails.value.color.toUpperCase()],
+        });
+      } else {
+        console.log("add player online");
+      }
 
       clearAddPlayer();
     };
@@ -128,6 +148,7 @@ export default defineComponent({
 
     return {
       game,
+      socket,
 
       type,
       isOnline,
@@ -157,7 +178,10 @@ export default defineComponent({
 </script>
 
 <template>
-  <main class="flex flex-col justify-center items-center p-5">
+  <main
+    v-if="!isOnline || socket.isConnected"
+    class="flex flex-col justify-center items-center p-5"
+  >
     <c-gradient-heading class="mb-8">Waiting Room</c-gradient-heading>
 
     <div class="max-w-4xl w-full flex flex-col gap-5">

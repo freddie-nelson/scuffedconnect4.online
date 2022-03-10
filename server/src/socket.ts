@@ -13,9 +13,7 @@ export default function (socket: Socket) {
   const joinRoom = () => {};
   const leaveRoom = () => {};
 
-  socket.on("disconnect", () => {
-    leaveRoom();
-  });
+  socket.on("disconnect", leaveRoom);
 
   socket.on("create-room", createRoom);
 

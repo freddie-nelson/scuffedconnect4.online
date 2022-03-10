@@ -23,14 +23,14 @@ export default defineComponent({
 
     const currentToast = ref<Toast>();
     watchEffect(() => {
-      currentToast.value = store.state.toastQueue[0];
+      currentToast.value = store.toastQueue[0];
     });
 
     const reset = ref(false);
     const showToast = computed(() => !!currentToast.value && !reset.value);
 
     const removeToast = () => {
-      store.commit("REMOVE_TOAST");
+      store.removeToast();
 
       reset.value = true;
       nextTick(() => (reset.value = false));

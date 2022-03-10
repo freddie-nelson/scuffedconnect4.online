@@ -18,7 +18,7 @@
     "
     @click="showModal = true"
   >
-    <p class="mr-2 text-sm font-mono font-medium">{{ $store.state.theme }}</p>
+    <p class="mr-2 text-sm font-mono font-medium">{{ chosenTheme }}</p>
     <Icon class="w-6 h-6" :icon="icons.theme" />
   </button>
 
@@ -43,16 +43,12 @@
           text-sm
           font-mono font-medium
           opacity-70
-          hover:opacity-100
-          hover:text-bg-dark
-          hover:bg-input-blur-dark
+          hover:opacity-100 hover:text-bg-dark hover:bg-input-blur-dark
           transition-all
           duration-300
           outline-none
         "
-        :class="
-          $store.state.theme === theme ? 'opacity-100 text-primary-600' : ''
-        "
+        :class="chosenTheme === theme ? 'opacity-100 text-primary-600' : ''"
         @click="changeTheme(theme)"
       >
         {{ theme }}
@@ -62,14 +58,14 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from "vue";
+import { computed, defineComponent, ref } from "vue";
+import { useStore } from "@/store";
 import themes from "@/utils/themes";
 
 import CModal from "./Modal/CModal.vue";
 
 import { Icon } from "@iconify/vue";
 import themeIcon from "@iconify-icons/feather/layout";
-import { useStore } from "@/store";
 
 export default defineComponent({
   name: "CThemeSelector",
@@ -82,15 +78,17 @@ export default defineComponent({
 
     const showModal = ref(false);
 
+    const chosenTheme = computed(() => store.theme);
+
     const changeTheme = (theme: string) => {
       if (!themes.includes(theme)) return;
 
       const html = document.querySelector("html");
       if (html) {
-        html.classList.remove(store.state.theme);
+        html.classList.remove(store.theme);
         html.classList.add(theme);
 
-        store.commit("SET_THEME", theme);
+        store.setTheme(theme);
       }
     };
 
@@ -98,6 +96,7 @@ export default defineComponent({
       showModal,
 
       themes,
+      chosenTheme,
       changeTheme,
 
       icons: {

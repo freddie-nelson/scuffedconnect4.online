@@ -16,16 +16,18 @@
     "@vueuse/core": "^7.7.1",
     "autoprefixer": "^10",
     "core-js": "^3.8.3",
+    "pinia": "^2.0.11",
     "postcss": "^8",
+    "socket.io-client": "^4.4.1",
     "tailwindcss": "^3",
     "three": "^0.136.0",
     "vue": "^3.2.13",
     "vue-router": "^4.0.3",
-    "vue3-slider": "^1.6.8",
-    "vuex": "^4.0.0"
+    "vue3-slider": "^1.6.8"
   },
   "devDependencies": {
     "@types/resize-observer-browser": "^0.1.7",
+    "@types/socket.io-client": "^3.0.0",
     "@types/three": "0.136.1",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",

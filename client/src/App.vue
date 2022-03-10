@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted } from "vue";
-import { useStore } from "vuex";
+import { useStore } from "./store";
 import themes from "@/utils/themes";
 
 import CThemeSelector from "./components/shared/CThemeSelector.vue";
@@ -17,7 +17,7 @@ export default defineComponent({
       const theme = localStorage.getItem("theme") || themes[0];
       html?.classList.add(theme);
 
-      store.commit("SET_THEME", theme);
+      store.setTheme(theme);
     });
   },
 });

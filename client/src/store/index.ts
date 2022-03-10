@@ -1,5 +1,7 @@
+import { defineStore } from "pinia";
+import { ref, watch } from "vue";
+import Socket from "@/api/socket";
 import Game from "@shared/game";
-import { createStore, useStore as vuexUseStore } from "vuex";
 
 export interface Toast {
   text: string;
@@ -10,34 +12,46 @@ export interface State {
   toastQueue: Toast[];
   theme: string;
   game?: Game;
+  socket?: Socket;
 }
 
-export default createStore<State>({
-  state: {
-    toastQueue: [],
-    theme: "",
-  },
-  mutations: {
-    ADD_TOAST(state, toast: Toast) {
-      state.toastQueue.push(toast);
-    },
-    REMOVE_TOAST(state) {
-      state.toastQueue.shift();
-    },
+export const useStore = defineStore("main", () => {
+  const toastQueue = ref<Toast[]>([]);
+  const addToast = (toast: Toast) => {
+    toastQueue.value.push(toast);
+  };
+  const removeToast = () => {
+    toastQueue.value.shift();
+  };
 
-    SET_THEME(state, theme: string) {
-      state.theme = theme;
-      localStorage.setItem("theme", theme);
-    },
+  const theme = ref("");
+  const setTheme = (t: string) => {
+    theme.value = t;
+    localStorage.setItem("theme", t);
+  };
 
-    RESET_GAME(state) {
-      state.game = new Game();
-    },
-  },
-  actions: {},
-  modules: {},
+  const game = ref<Game | undefined>();
+  const resetGame = () => {
+    game.value = new Game();
+  };
+
+  const socket = ref<Socket | undefined>();
+  const createSocket = () => {
+    socket.value = new Socket();
+  };
+
+  return {
+    toastQueue,
+    addToast,
+    removeToast,
+
+    theme,
+    setTheme,
+
+    game,
+    resetGame,
+
+    socket,
+    createSocket,
+  };
 });
-
-export const useStore = () => {
-  return vuexUseStore<State>();
-};

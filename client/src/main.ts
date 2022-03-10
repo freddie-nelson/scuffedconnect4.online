@@ -1,7 +1,7 @@
 import { createApp } from "vue";
 import App from "./App.vue";
-import store from "@/store";
 import router from "@/router";
+import { createPinia } from "pinia";
 
 // import fonts
 import "@fontsource/poppins/300.css";
@@ -22,7 +22,7 @@ import "@/assets/tailwind.css";
 // create app
 const app = createApp(App);
 app.use(router);
-app.use(store);
+app.use(createPinia());
 
 app.config.performance = false;
 

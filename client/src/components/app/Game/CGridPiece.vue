@@ -19,7 +19,7 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore();
-    const game = computed(() => store.state.game as Game);
+    const game = computed(() => store.game as Game);
 
     const rows = computed(() => game.value.getRows());
     // const cols = computed(() => game.value.getcols());
