@@ -20,7 +20,7 @@ export default function (socket: Socket) {
     if (store.room) return;
 
     const room = rooms[code];
-    if (!room || room.hasStarted()) {
+    if (!room || room.hasStarted() || room.getPlayerCount() >= 8) {
       socket.emit("room:notfound");
       return;
     }
@@ -38,12 +38,11 @@ export default function (socket: Socket) {
     store.room = undefined;
     room.removeSocket(socket);
 
+    socket.emit("room:left");
+
     if (room.getSocketCount() === 0) {
       delete rooms[room.code];
-      console.log("delete " + room.code);
     }
-
-    socket.emit("room:left");
   };
 
   const createRoom = () => {
@@ -72,6 +71,12 @@ export default function (socket: Socket) {
     if (store.room.start()) store.room.emitAll("game:start", store.room.getPlaying());
   });
 
+  socket.on("game:restart", () => {
+    if (!store.room || socket !== store.room.owner) return;
+
+    if (store.room.restart()) store.room.emitAll("game:restart", store.room.getPlaying());
+  });
+
   socket.on("game:addplayer", (p: Player) => {
     if (!store.room) return;
 
@@ -81,7 +86,7 @@ export default function (socket: Socket) {
   socket.on("game:removeplayer", (p: Player) => {
     if (!store.room) return;
 
-    if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
+    // if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
   });
 
   socket.on("game:droppiece", (p: Player, col: number) => {

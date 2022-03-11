@@ -36,6 +36,17 @@ export default class Room extends Game {
         s.emit("room:left");
       });
     }
+
+    this.players.forEach((p) => {
+      if (p.socketId === socket.id) {
+        this.removePlayer(p);
+        this.emitAll("game:removeplayer", p);
+      }
+    });
+
+    if (this.getPlayerCount() < 2) {
+      this.emitAll("room:forceleave");
+    }
   }
 
   getSocketCount() {

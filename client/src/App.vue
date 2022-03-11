@@ -28,7 +28,7 @@ export default defineComponent({
 
   <c-theme-selector />
 
-  <router-view class="bg-bg-light w-full h-screen" />
+  <router-view class="bg-bg-light w-full min-h-screen" />
 
   <div id="modals"></div>
 

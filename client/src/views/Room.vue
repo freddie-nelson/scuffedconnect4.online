@@ -1,14 +1,5 @@
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  onBeforeMount,
-  onUnmounted,
-  ref,
-  watch,
-  watchEffect,
-  watchPostEffect,
-} from "vue";
+import { computed, defineComponent, onBeforeMount, ref, watch } from "vue";
 import { onBeforeRouteLeave, useRoute, useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 import { useStore } from "@/store";
@@ -17,6 +8,7 @@ import { Colors, hex } from "@shared/colors";
 import Socket from "@/api/socket";
 
 import addIcon from "@iconify-icons/feather/user";
+import leaveIcon from "@iconify-icons/feather/log-out";
 
 import Vue3Slider from "vue3-slider";
 
@@ -76,8 +68,6 @@ export default defineComponent({
 
       if (type.value === "online") {
         if (!store.socket) store.createSocket();
-      } else if (type.value === "local") {
-        console.log("local");
       }
 
       store.resetGame();
@@ -96,12 +86,6 @@ export default defineComponent({
       if (isConnected.value) {
         if (roomCode.value) socket.value.joinRoom(roomCode.value);
         else socket.value.createRoom();
-      } else {
-        router.push({ name: "Home" });
-        store.addToast({
-          text: "Could not connect to game server!",
-          duration: 1500,
-        });
       }
     });
 
@@ -195,6 +179,16 @@ export default defineComponent({
       }
     };
 
+    const leaveRoom = () => {
+      if (type.value === "local") {
+        router.push({ name: "Home" });
+      } else {
+        if (!socket.value || !isConnected.value) return;
+
+        socket.value.leaveRoom();
+      }
+    };
+
     return {
       game,
       socket,
@@ -215,11 +209,14 @@ export default defineComponent({
 
       rows,
       cols,
+
       startGame,
+      leaveRoom,
 
       Colors,
       icons: {
         add: addIcon,
+        leave: leaveIcon,
       },
     };
   },
@@ -228,10 +225,12 @@ export default defineComponent({
 
 <template>
   <main
-    v-if="!isOnline || socket.isConnected"
-    class="flex flex-col justify-center items-center p-5"
+    v-if="!isOnline || (socket.isConnected && game.isOnline)"
+    class="flex flex-col justify-center items-center p-10"
   >
-    <c-gradient-heading class="mb-8">Waiting Room</c-gradient-heading>
+    <c-gradient-heading class="mb-8 text-center"
+      >Waiting Room</c-gradient-heading
+    >
 
     <div class="max-w-4xl w-full flex flex-col gap-5">
       <div class="w-full">
@@ -306,57 +305,67 @@ export default defineComponent({
         </button>
       </div>
 
-      <div
-        v-if="!isOnline || socket.isRoomOwner"
-        class="w-full flex flex-col gap-4"
-      >
+      <div class="w-full flex flex-col gap-5">
         <p
-          class="text-bg-dark text-lg font-mono font-semibold opacity-60 -mb-2"
+          class="text-bg-dark text-lg font-mono font-semibold opacity-60 -mb-3"
         >
           Room Controls
         </p>
 
-        <div>
-          <p class="text-t-sub font-medium">Rows</p>
-          <vue3-slider
-            color="var(--accent-500)"
-            trackColor="var(--b-dark-dark)"
-            tooltipColor="var(--bg-dark)"
-            tooltipTextColor="var(--bg-light)"
-            sticky
-            :height="12"
-            tooltip
-            steps
-            :min="4"
-            :max="10"
-            v-model="rows"
-          />
-        </div>
-
-        <div>
-          <p class="text-t-sub font-medium">Columns</p>
-          <vue3-slider
-            color="var(--accent-500)"
-            trackColor="var(--b-dark-dark)"
-            tooltipColor="var(--bg-dark)"
-            tooltipTextColor="var(--bg-light)"
-            sticky
-            :height="12"
-            tooltip
-            steps
-            :min="4"
-            :max="10"
-            v-model="cols"
-          />
-        </div>
-
-        <c-button
-          v-if="game.getPlayerCount() >= 2"
-          class="h-20 w-full"
-          @click="startGame"
+        <div
+          v-if="!isOnline || socket.isRoomOwner"
+          class="flex flex-col gap-5 w-full"
         >
-          Start Game
-        </c-button>
+          <div>
+            <p class="text-t-sub font-medium">Rows</p>
+            <vue3-slider
+              color="var(--accent-500)"
+              trackColor="var(--b-dark-dark)"
+              tooltipColor="var(--bg-dark)"
+              tooltipTextColor="var(--bg-light)"
+              sticky
+              :height="12"
+              tooltip
+              steps
+              :min="4"
+              :max="10"
+              v-model="rows"
+            />
+          </div>
+
+          <div>
+            <p class="text-t-sub font-medium">Columns</p>
+            <vue3-slider
+              color="var(--accent-500)"
+              trackColor="var(--b-dark-dark)"
+              tooltipColor="var(--bg-dark)"
+              tooltipTextColor="var(--bg-light)"
+              sticky
+              :height="12"
+              tooltip
+              steps
+              :min="4"
+              :max="10"
+              v-model="cols"
+            />
+          </div>
+
+          <c-button
+            v-if="game.getPlayerCount() >= 2"
+            class="h-20 w-full"
+            @click="startGame"
+          >
+            Start Game
+          </c-button>
+        </div>
+
+        <c-button-icon
+          class="h-20 flex-grow"
+          :icon="icons.leave"
+          @click="leaveRoom"
+        >
+          Leave Room
+        </c-button-icon>
       </div>
     </div>
 
@@ -403,7 +412,7 @@ export default defineComponent({
   <main v-else class="flex flex-col gap-8 justify-center items-center">
     <c-spinner-circle class="transform scale-75" />
     <p class="text-bg-dark font-mono text-2xl font-semibold text-center">
-      Connecting to server...
+      Creating room...
     </p>
   </main>
 </template>

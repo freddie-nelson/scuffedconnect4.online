@@ -96,7 +96,7 @@ export default defineComponent({
         {{ username }}
       </p>
 
-      <p v-if="isHost" class="text-base -mt-0.5 opacity-60">Host</p>
+      <!-- <p v-if="isHost" class="text-base -mt-0.5 opacity-60">Host</p> -->
     </div>
 
     <div

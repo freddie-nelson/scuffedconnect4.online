@@ -42,7 +42,12 @@ export default class Game {
     if (!this.host) this.host = player;
 
     // color is taken
-    if (this.findPlayerByColor(player.color) || this.findIndexOfPlayer(player) !== -1) return false;
+    if (
+      this.findPlayerByColor(player.color) ||
+      this.findIndexOfPlayer(player) !== -1 ||
+      this.getPlayerCount() >= 8
+    )
+      return false;
 
     this.players.push(player);
     return true;
@@ -52,12 +57,17 @@ export default class Game {
     const i = this.findIndexOfPlayer(player);
     if (i === -1) return false;
 
-    this.players.splice(i, 1);
+    // replace playing
+    if (player.id === this.playing?.id) {
+      this.nextTurn();
+    }
 
     // replace host
-    if (player === this.host) {
+    if (player.id === this.host?.id) {
       this.host = this.players[Math.floor(Math.random() * this.players.length)];
     }
+
+    this.players.splice(i, 1);
 
     return true;
   }
@@ -164,7 +174,7 @@ export default class Game {
 
   // game methods
   start(playing?: Player) {
-    if (this.playing || this.winner) return false;
+    if (this.started) return false;
 
     this.started = true;
     this.createGrid();
@@ -179,6 +189,16 @@ export default class Game {
 
   hasStarted() {
     return this.started;
+  }
+
+  restart(playing?: Player) {
+    if (!this.started && !this.winner) return false;
+
+    this.started = false;
+    this.winner = undefined;
+    this.winningSlots = [];
+
+    return this.start(playing);
   }
 
   nextTurn() {
@@ -207,17 +227,12 @@ export default class Game {
   }
 
   dropPiece(player: Player, col: number) {
-    if (
-      col < 0 ||
-      col >= this.cols ||
-      this.findIndexOfPlayer(player) === -1 ||
-      player.id !== this.playing?.id
-    )
+    if (col < 0 || col >= this.cols || !this.findPlayerById(player) || player.id !== this.playing?.id)
       return false;
 
     const column = this.grid[col];
     const i = column.findIndex((r) => r === null);
-    if (i === -1) return;
+    if (i === -1) return false;
 
     column[i] = player.color;
 

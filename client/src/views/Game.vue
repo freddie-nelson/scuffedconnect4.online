@@ -8,6 +8,8 @@ import {
   ComputedRef,
   defineComponent,
   onBeforeMount,
+  onBeforeUnmount,
+  onUnmounted,
   ref,
   watch,
 } from "vue";
@@ -18,10 +20,11 @@ import CGridPiece from "@/components/app/Game/CGridPiece.vue";
 import CGridSlot from "@/components/app/Game/CGridSlot.vue";
 import CGridOverlay from "@/components/app/Game/CGridOverlay.vue";
 import { storeToRefs } from "pinia";
+import CButton from "@/components/shared/Button/CButton.vue";
 
 export default defineComponent({
   name: "Game",
-  components: { CPlayer, CGridSlot, CGridPiece, CGridOverlay },
+  components: { CPlayer, CGridSlot, CGridPiece, CGridOverlay, CButton },
   setup() {
     const router = useRouter();
     const store = useStore();
@@ -48,10 +51,13 @@ export default defineComponent({
         game.value?.start();
       }
 
-      if (!game.value || game.value.getPlayerCount() < 2)
-        return router.push({ name: "Home" });
+      if (store.game && !store.game.isOnline) store.game.start();
+    });
 
-      if (!game.value.isOnline) game.value.start();
+    onBeforeUnmount(() => {
+      if (game.value && game.value.isOnline) {
+        socket.value?.leaveRoom();
+      }
     });
 
     const rows = computed(() => game.value?.getRows() || 6);
@@ -73,9 +79,8 @@ export default defineComponent({
 
     const showWinnerOverlay = ref(false);
     watch(winner, (winner) => {
-      if (!winner) return;
-
-      showWinnerOverlay.value = true;
+      if (!winner) showWinnerOverlay.value = false;
+      else showWinnerOverlay.value = true;
     });
 
     const pickerSlot = computed<Slot>(() => {
@@ -106,11 +111,40 @@ export default defineComponent({
       if (!game.value || !playing.value) return;
 
       if (game.value.isOnline) {
-        if (!socket.value || !socket.value.canPlay) return;
+        if (!socket.value) return;
 
         socket.value.dropPiece(playing.value, col);
       } else {
         game.value.dropPiece(playing.value, col);
+      }
+    };
+
+    const leaveRoom = () => {
+      if (!game.value) return;
+
+      if (game.value.isOnline) {
+        if (!socket.value) return;
+
+        socket.value.leaveRoom();
+      } else {
+        router.push({ name: "Home" });
+      }
+    };
+
+    const playingAgain = ref(false);
+    const playAgain = () => {
+      if (!game.value) return;
+
+      if (game.value.isOnline) {
+        if (!socket.value) return;
+
+        if (socket.value.isRoomOwner) {
+          socket.value.restartGame();
+        } else {
+          playingAgain.value = true;
+        }
+      } else {
+        game.value.restart();
       }
     };
 
@@ -130,6 +164,11 @@ export default defineComponent({
       pickerSlot,
       pickerTranslate,
       dropPiece,
+
+      leaveRoom,
+
+      playingAgain,
+      playAgain,
     };
   },
 });
@@ -194,10 +233,19 @@ export default defineComponent({
           class="winner-overlay"
         >
           <template v-slot:tag>Well Done!</template>
+
+          <div v-if="!playingAgain" class="flex gap-4 h-16 mt-1">
+            <c-button @click="leaveRoom">Leave Room</c-button>
+            <c-button @click="playAgain">Play Again</c-button>
+          </div>
+
+          <p v-else class="text-xl mt-3 font-mono font-semibold text-bg-dark">
+            Waiting for room owner...
+          </p>
         </c-grid-overlay>
       </div>
 
-      <div class="h-16 w-full flex gap-4">
+      <div class="h-16 w-full flex gap-2 md:gap-4">
         <c-player
           v-if="playing"
           class="h-full flex-grow"
@@ -209,7 +257,7 @@ export default defineComponent({
 
         <c-player
           v-if="nextPlaying"
-          class="h-full w-72"
+          class="h-full w-72 hidden sm:flex"
           :username="nextPlaying.username"
           :color="nextPlaying.color"
           :isHost="nextPlaying === game.getHost()"

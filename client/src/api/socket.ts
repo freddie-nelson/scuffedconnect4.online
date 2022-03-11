@@ -12,14 +12,21 @@ export default class Socket {
 
   isRoomOwner = ref(false);
   roomCode = ref("");
-  canPlay = ref(true);
 
   constructor() {
     const store = useStore();
     const router = useRouter();
 
     this.socket.on("connect", () => (this.isConnected.value = true));
-    this.socket.on("disconnect", () => (this.isConnected.value = false));
+    this.socket.on("disconnect", () => {
+      this.isConnected.value = false;
+
+      router.push({ name: "Home" });
+      store.addToast({
+        text: "Disconnected from game server!",
+        duration: 2500,
+      });
+    });
 
     // room events
     this.socket.on("room:created", (code: string) => {
@@ -35,17 +42,26 @@ export default class Socket {
     });
 
     this.socket.on("room:notfound", () => {
-      this.createRoom();
+      router.push({ name: "Home" });
+      store.addToast({
+        text: "That room could not be found, has started or was full.",
+        duration: 2500,
+      });
     });
 
     this.socket.on("room:left", () => {
       this.roomCode.value = "";
       this.isRoomOwner.value = false;
 
+      router.push({ name: "Home" });
       store.addToast({
         text: "You have left the room, it either closed or you left.",
         duration: 2500,
       });
+    });
+
+    this.socket.on("room:forceleave", () => {
+      this.leaveRoom();
     });
 
     // game events
@@ -54,6 +70,16 @@ export default class Socket {
 
       store.game.start(p);
       router.push({ name: "Game" });
+    });
+
+    this.socket.on("game:restart", (p) => {
+      store.game?.restart(p);
+
+      if (!this.isRoomOwner.value)
+        store.addToast({
+          text: "The room owner restarted the game.",
+          duration: 2500,
+        });
     });
 
     this.socket.on("game:addplayer", (p: Player) => {
@@ -108,6 +134,13 @@ export default class Socket {
     if (!this.isConnected.value || !this.isRoomOwner.value || !store.game) return;
 
     this.socket.emit("game:start");
+  };
+
+  restartGame = () => {
+    const store = useStore();
+    if (!this.isConnected.value || !this.isRoomOwner.value || !store.game) return;
+
+    this.socket.emit("game:restart");
   };
 
   addPlayer = (p: Player) => {
