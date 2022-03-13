@@ -2,7 +2,7 @@ const colors = require("tailwindcss/colors");
 
 module.exports = {
   content: ["./public/**/*.html", "./src/**/*.{vue,js,ts,jsx,tsx}"],
-  darkMode: false, // or 'media' or 'class'
+  darkMode: "media", // 'media' or 'class'
   theme: {
     extend: {
       fontFamily: {
@@ -96,9 +96,9 @@ module.exports = {
         success: colors.green,
 
         // background colors
-        coolGray: colors.coolGray,
-        gray: colors.gray,
-        warmGray: colors.warmGray,
+        coolGray: colors.gray,
+        gray: colors.neutral,
+        warmGray: colors.stone,
         black: {
           50: "#F4F4F4",
           100: "#DBDBDB",
