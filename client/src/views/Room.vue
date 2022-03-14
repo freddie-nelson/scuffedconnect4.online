@@ -90,11 +90,8 @@ export default defineComponent({
     });
 
     const copyRoomCode = () => {
-      const url = new URL(location.href);
-      url.searchParams.set("code", roomCode.value);
-
       navigator.clipboard
-        .writeText(url.href)
+        .writeText(roomCode.value)
         .then(() => {
           store.addToast({
             text: "Copied to clipboard!",
