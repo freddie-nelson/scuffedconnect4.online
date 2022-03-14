@@ -4,7 +4,10 @@ import { io } from "socket.io-client";
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 
-const SERVER_URL = process.env.NODE_ENV === "production" ? "" : `http://${window.location.hostname}:3000`;
+const SERVER_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://server.scuffed4inarow.online"
+    : `http://${window.location.hostname}:3000`;
 
 export default class Socket {
   socket = io(SERVER_URL);
