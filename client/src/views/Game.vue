@@ -1,30 +1,39 @@
 <script lang="ts">
 import { useStore } from "@/store";
 import { Colors } from "@shared/colors";
-import Game, { Slot } from "@shared/game";
-import { useMouseInElement } from "@vueuse/core";
+import { Slot } from "@shared/game";
+import { useMouseInElement, useResizeObserver } from "@vueuse/core";
 import {
   computed,
   ComputedRef,
   defineComponent,
   onBeforeMount,
   onBeforeUnmount,
-  onUnmounted,
   ref,
   watch,
 } from "vue";
 import { useRouter } from "vue-router";
+import { storeToRefs } from "pinia";
+
+import leaveIcon from "@iconify-icons/feather/log-out";
 
 import CPlayer from "@/components/app/CPlayer.vue";
 import CGridPiece from "@/components/app/Game/CGridPiece.vue";
 import CGridSlot from "@/components/app/Game/CGridSlot.vue";
 import CGridOverlay from "@/components/app/Game/CGridOverlay.vue";
-import { storeToRefs } from "pinia";
 import CButton from "@/components/shared/Button/CButton.vue";
+import CButtonIcon from "@/components/shared/Button/CButtonIcon.vue";
 
 export default defineComponent({
   name: "Game",
-  components: { CPlayer, CGridSlot, CGridPiece, CGridOverlay, CButton },
+  components: {
+    CPlayer,
+    CGridSlot,
+    CGridPiece,
+    CGridOverlay,
+    CButton,
+    CButtonIcon,
+  },
   setup() {
     const router = useRouter();
     const store = useStore();
@@ -94,17 +103,21 @@ export default defineComponent({
 
     const gridEl = ref<HTMLDivElement>();
     const mouseInGrid = useMouseInElement(gridEl);
+    const colWidth = ref(100);
+    useResizeObserver(gridEl, (entries) => {
+      const entry = entries[0];
+      colWidth.value = entry.contentRect.width / cols.value;
+    });
 
     const pickerTranslate: ComputedRef<number> = computed<number>(() => {
       if (showPlayingOverlay.value) return pickerTranslate.value;
 
-      const colWidth = mouseInGrid.elementWidth.value / cols.value;
-      const col = Math.floor(mouseInGrid.elementX.value / colWidth);
+      const col = Math.floor(mouseInGrid.elementX.value / colWidth.value);
 
-      const max = (cols.value - 1) * colWidth;
+      const max = (cols.value - 1) * colWidth.value;
       const min = 0;
 
-      return Math.max(min, Math.min(max, col * colWidth));
+      return Math.max(min, Math.min(max, col * colWidth.value));
     });
 
     const dropPiece = (col: number) => {
@@ -169,13 +182,17 @@ export default defineComponent({
 
       playingAgain,
       playAgain,
+
+      icons: {
+        leave: leaveIcon,
+      },
     };
   },
 });
 </script>
 
 <template>
-  <main class="flex justify-center items-center">
+  <main class="flex justify-center items-center p-10">
     <div class="game flex flex-col gap-4 relative">
       <!-- picker -->
       <div
@@ -195,6 +212,22 @@ export default defineComponent({
       </div>
 
       <div ref="gridEl" class="grid-container">
+        <c-button-icon
+          class="
+            absolute
+            left-full
+            px-0
+            w-9
+            h-9
+            ml-4
+            transform
+            origin-top-left
+            scale-125
+          "
+          :icon="icons.leave"
+          @click="leaveRoom"
+        ></c-button-icon>
+
         <!-- pieces -->
         <div class="grid">
           <c-grid-piece

@@ -1,4 +1,4 @@
-import { Colors } from "./colors";
+import { Colors, hex } from "./colors";
 import Player from "./player";
 
 export interface Slot {
@@ -10,7 +10,7 @@ export interface Slot {
 
 export default class Game {
   protected host: Player | undefined;
-  protected players: Player[] = [];
+  readonly players: Player[] = [];
 
   protected playing: Player | undefined;
 
@@ -210,8 +210,29 @@ export default class Game {
       return;
     }
 
+    if (this.isBoardFull()) {
+      this.winner = {
+        id: "BoardFullDraw" + Date.now(),
+        username: "Draw",
+        color: Colors.RED,
+      };
+      this.playing = undefined;
+      return;
+    }
+
     // move turn to next player
     this.playing = this.getNextPlayer(this.playing);
+  }
+
+  isBoardFull() {
+    for (let c = 0; c < this.cols; c++) {
+      for (let r = 0; r < this.rows; r++) {
+        const slot = this.grid[c][r];
+        if (slot === null) return false;
+      }
+    }
+
+    return true;
   }
 
   checkForWin(): boolean {

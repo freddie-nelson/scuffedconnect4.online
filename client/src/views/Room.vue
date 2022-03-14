@@ -109,24 +109,35 @@ export default defineComponent({
         });
     };
 
-    const colorOptions = computed(() => {
-      return Object.entries(Colors)
-        .filter((c) => parseInt(c[0], 10) >= 0)
-        .filter(
-          (c) => game.value?.findPlayerByColor(Number(c[0])) === undefined
-        )
-        .map((c) => c[1].toString().toLowerCase());
+    const players = computed<Player[]>(() => {
+      return game.value ? [...game.value.players] : [];
     });
 
     const showAddPlayerModal = ref(false);
     const addPlayerDetails = ref({
       username: "",
-      color: colorOptions.value[0],
+      color: "red",
+    });
+
+    const colorOptions = ref<string[]>([]);
+    watch(showAddPlayerModal, (show) => {
+      if (!show) return;
+
+      colorOptions.value = Object.entries(Colors)
+        .filter((c) => parseInt(c[0], 10) >= 0)
+        .filter(
+          (c) => game.value?.findPlayerByColor(Number(c[0])) === undefined
+        )
+        .map((c) => c[1].toString().toLowerCase());
+
+      addPlayerDetails.value.color = colorOptions.value[0];
     });
 
     const hexColor = computed(() => {
-      // @ts-expect-error this works
-      return hex.get(Colors[addPlayerDetails.value.color.toUpperCase()]);
+      return players.value.length >= 8
+        ? "#000"
+        : // @ts-expect-error this works
+          hex.get(Colors[addPlayerDetails.value.color.toUpperCase()]);
     });
 
     const clearAddPlayer = () => {
@@ -204,6 +215,7 @@ export default defineComponent({
       colorOptions,
       hexColor,
 
+      players,
       clearAddPlayer,
       addPlayer,
 
@@ -240,7 +252,7 @@ export default defineComponent({
 
         <div class="flex flex-wrap gap-4">
           <c-player
-            v-for="p of game.players"
+            v-for="p of players"
             :key="p.id"
             :username="p.username"
             :color="p.color"
@@ -249,6 +261,7 @@ export default defineComponent({
           />
 
           <c-button-icon
+            v-if="players.length < 8"
             class="h-20 flex-grow min-w-[16rem]"
             :icon="icons.add"
             @click="showAddPlayerModal = true"

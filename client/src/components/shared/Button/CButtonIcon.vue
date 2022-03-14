@@ -22,8 +22,8 @@ export default defineComponent({
 </script>
 
 <template>
-  <c-button>
-    <Icon class="mr-2" :icon="icon" />
+  <c-button class="flex gap-2">
+    <Icon :icon="icon" />
     <slot></slot>
   </c-button>
 </template>
