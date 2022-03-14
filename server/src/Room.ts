@@ -1,10 +1,10 @@
-import { randomUUID } from "crypto";
+import { v4 as uuidv4 } from "uuid";
 import { Socket } from "socket.io";
 
 import Game from "@shared/game";
 
 export default class Room extends Game {
-  readonly code = randomUUID().substr(0, 5);
+  readonly code = uuidv4().substr(0, 5);
 
   readonly owner: Socket;
   private sockets: Socket[] = [];
