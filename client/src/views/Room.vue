@@ -21,6 +21,7 @@ import CInputText from "@/components/shared/Input/CInputText.vue";
 import CInputDropdown from "@/components/shared/Input/CInputDropdown.vue";
 import CSpinnerCircle from "@/components/shared/Spinner/CSpinnerCircle.vue";
 import Player from "@shared/player";
+import CInputToggle from "@/components/shared/Input/CInputToggle.vue";
 
 export default defineComponent({
   name: "Room",
@@ -34,6 +35,7 @@ export default defineComponent({
     CInputDropdown,
     Vue3Slider,
     CSpinnerCircle,
+    CInputToggle,
   },
   setup() {
     const router = useRouter();
@@ -114,6 +116,7 @@ export default defineComponent({
     const addPlayerDetails = ref({
       username: "",
       color: "red",
+      bot: false,
     });
 
     const colorOptions = ref<string[]>([]);
@@ -142,6 +145,7 @@ export default defineComponent({
 
       addPlayerDetails.value.username = "";
       addPlayerDetails.value.color = colorOptions.value[0];
+      addPlayerDetails.value.bot = false;
     };
 
     const addPlayer = () => {
@@ -152,6 +156,7 @@ export default defineComponent({
         username: addPlayerDetails.value.username,
         // @ts-expect-error this works
         color: Colors[addPlayerDetails.value.color.toUpperCase()],
+        bot: addPlayerDetails.value.bot,
       };
 
       if (type.value === "local") {
@@ -237,9 +242,9 @@ export default defineComponent({
     v-if="!isOnline || (socket.isConnected && game.isOnline)"
     class="flex flex-col justify-center items-center p-10"
   >
-    <c-gradient-heading class="mb-8 text-center"
-      >Waiting Room</c-gradient-heading
-    >
+    <c-gradient-heading class="mb-8 text-center">
+      Waiting Room
+    </c-gradient-heading>
 
     <div class="max-w-4xl w-full flex flex-col gap-5">
       <div class="w-full">
@@ -254,6 +259,7 @@ export default defineComponent({
             :username="p.username"
             :color="p.color"
             :isHost="p === game.getHost()"
+            :isBot="p.bot"
             class="h-20 flex-grow"
           />
 
@@ -401,6 +407,11 @@ export default defineComponent({
           placeholder="Enter username..."
           v-model="addPlayerDetails.username"
         />
+
+        <div class="mr-auto w-max">
+          <label class="text-t-sub font-medium">AI Controlled</label>
+          <c-input-toggle class="mt-1" v-model="addPlayerDetails.bot" />
+        </div>
 
         <c-input-dropdown
           class="w-full"

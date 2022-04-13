@@ -50,11 +50,13 @@ export default defineComponent({
           id: "13435345",
           username: "Player",
           color: Colors.RED,
+          bot: false,
         });
         game.value?.addPlayer({
           id: "5674783",
           username: "Opponent",
           color: Colors.BLUE,
+          bot: false,
         });
 
         game.value?.start();
@@ -78,10 +80,33 @@ export default defineComponent({
     );
 
     const showPlayingOverlay = ref(false);
+    let waitingForBot = false;
+    let playTime = 0;
+
     watch(playing, (playing) => {
       if (!playing) return;
 
       showPlayingOverlay.value = true;
+      playTime = performance.now();
+
+      if (
+        playing.bot &&
+        game.value &&
+        (!game.value.isOnline || playing.socketId === socket.value?.socket.id)
+      ) {
+        waitingForBot = true;
+        const col = game.value.bestMove();
+        if (col !== -1) {
+          const expected = playTime;
+
+          setTimeout(() => {
+            waitingForBot = false;
+            if (playTime === expected) dropPiece(col);
+          }, 2000);
+        }
+      } else {
+        waitingForBot = false;
+      }
     });
 
     const winner = computed(() => game.value?.getWinner());
@@ -121,7 +146,7 @@ export default defineComponent({
     });
 
     const dropPiece = (col: number) => {
-      if (!game.value || !playing.value) return;
+      if (!game.value || !playing.value || waitingForBot) return;
 
       if (game.value.isOnline) {
         if (!socket.value) return;
@@ -216,13 +241,14 @@ export default defineComponent({
           class="
             absolute
             left-full
-            px-0
+            px-[0_!important]
             w-9
             h-9
             ml-4
             transform
             origin-top-left
             scale-125
+            text-bg-light
           "
           :icon="icons.leave"
           @click="leaveRoom"
@@ -285,6 +311,7 @@ export default defineComponent({
           :username="playing.username"
           :color="playing.color"
           :isHost="playing === game.getHost()"
+          :isBot="playing.bot"
           isPlaying
         />
 
@@ -294,6 +321,7 @@ export default defineComponent({
           :username="nextPlaying.username"
           :color="nextPlaying.color"
           :isHost="nextPlaying === game.getHost()"
+          :isBot="nextPlaying.bot"
           upNext
         />
 

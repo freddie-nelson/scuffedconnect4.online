@@ -8,6 +8,7 @@
     />
 
     <button
+      type="button"
       :class="checked ? 'bg-accent-500' : 'bg-t-sub'"
       class="rounded-full w-18 h-9 focus:outline-none flex transition-colors"
       @click="

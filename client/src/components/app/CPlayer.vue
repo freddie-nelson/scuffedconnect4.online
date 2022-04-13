@@ -20,6 +20,10 @@ export default defineComponent({
       type: Number as () => Colors,
       required: true,
     },
+    isBot: {
+      type: Boolean,
+      default: false,
+    },
     isHost: {
       type: Boolean,
       default: false,
@@ -97,6 +101,7 @@ export default defineComponent({
       </p>
 
       <!-- <p v-if="isHost" class="text-base -mt-0.5 opacity-60">Host</p> -->
+      <p v-if="isBot" class="text-base -mt-0.5 opacity-60">Bot</p>
     </div>
 
     <div

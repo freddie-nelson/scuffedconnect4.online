@@ -215,6 +215,7 @@ export default class Game {
         id: "BoardFullDraw" + Date.now(),
         username: "Draw",
         color: Colors.RED,
+        bot: false,
       };
       this.playing = undefined;
       return;
@@ -259,6 +260,43 @@ export default class Game {
 
     this.nextTurn();
     return true;
+  }
+
+  /**
+   * Calculates the best column to drop a piece for the current player.
+   *
+   * **not really the best move**
+   */
+  bestMove(): number {
+    if (!this.playing) return -1;
+
+    const color = this.playing?.color;
+    const pieces: { col: number; row: number }[] = [];
+    this.grid.forEach((column, col) => {
+      column.forEach((piece, row) => {
+        if (piece === color) {
+          pieces.push({ col, row });
+        }
+      });
+    });
+
+    for (const piece of pieces) {
+      for (let c = -1; c <= 1; c++) {
+        for (let r = -1; r <= 1; r++) {
+          const column = this.grid[piece.col + c];
+          if (column && !column[piece.row + r]) {
+            return piece.col + c;
+          }
+        }
+      }
+    }
+
+    for (let i = 0; i < this.cols; i++) {
+      const col = Math.floor(Math.random() * this.cols);
+      if (!this.grid[col][this.rows - 1]) return col;
+    }
+
+    return -1;
   }
 
   protected areFourConnected(c: Colors): boolean {
