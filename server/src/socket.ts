@@ -80,13 +80,16 @@ export default function (socket: Socket) {
   socket.on("game:addplayer", (p: Player) => {
     if (!store.room) return;
 
-    if (store.room.addPlayer({ ...p, socketId: socket.id })) store.room.emitAll("game:addplayer", p);
+    const player = { ...p, socketId: socket.id };
+    if (store.room.addPlayer(player)) store.room.emitAll("game:addplayer", player);
   });
 
   socket.on("game:removeplayer", (p: Player) => {
     if (!store.room) return;
 
-    // if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
+    if (p.socketId === socket.id || store.room.getHost()?.socketId === socket.id) {
+      if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
+    }
   });
 
   socket.on("game:droppiece", (p: Player, col: number) => {

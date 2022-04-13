@@ -62,12 +62,12 @@ export default class Game {
       this.nextTurn();
     }
 
+    this.players.splice(i, 1);
+
     // replace host
     if (player.id === this.host?.id) {
       this.host = this.players[Math.floor(Math.random() * this.players.length)];
     }
-
-    this.players.splice(i, 1);
 
     return true;
   }

@@ -170,6 +170,16 @@ export default defineComponent({
       clearAddPlayer();
     };
 
+    const removePlayer = (p: Player) => {
+      if (type.value === "local") {
+        game.value?.removePlayer(p);
+      } else {
+        if (!socket.value || !isConnected.value) return;
+
+        socket.value.removePlayer(p);
+      }
+    };
+
     const rows = ref(6);
     const cols = ref(7);
 
@@ -220,6 +230,7 @@ export default defineComponent({
       players,
       clearAddPlayer,
       addPlayer,
+      removePlayer,
 
       rows,
       cols,
@@ -260,6 +271,12 @@ export default defineComponent({
             :color="p.color"
             :isHost="p === game.getHost()"
             :isBot="p.bot"
+            :removeable="
+              !isOnline ||
+              p.socketId === socket.socket.id ||
+              game.host.socketId === socket.socket.id
+            "
+            @remove="removePlayer(p)"
             class="h-20 flex-grow"
           />
 

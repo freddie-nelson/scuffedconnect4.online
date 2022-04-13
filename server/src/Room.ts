@@ -6,7 +6,7 @@ import Game from "@shared/game";
 export default class Room extends Game {
   readonly code = uuidv4().substr(0, 5);
 
-  readonly owner: Socket;
+  owner: Socket;
   private sockets: Socket[] = [];
 
   constructor(owner: Socket) {
@@ -30,11 +30,7 @@ export default class Room extends Game {
     this.sockets.splice(i, 1);
 
     if (socket === this.owner) {
-      this.sockets.forEach((s) => {
-        this.removeSocket(s);
-
-        s.emit("room:left");
-      });
+      this.owner = this.sockets[Math.floor(Math.random() * this.sockets.length)];
     }
 
     this.players.forEach((p) => {

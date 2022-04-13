@@ -5,6 +5,7 @@ import { Colors, hex } from "@shared/colors";
 
 import { Icon } from "@iconify/vue";
 import playingIcon from "@iconify-icons/feather/play";
+import removeIcon from "@iconify-icons/feather/log-out";
 
 export default defineComponent({
   name: "CPlayer",
@@ -40,7 +41,12 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    removeable: {
+      type: Boolean,
+      default: false,
+    },
   },
+  emits: ["remove"],
   setup(props) {
     const colorEl = ref(document.createElement("div"));
 
@@ -61,6 +67,7 @@ export default defineComponent({
 
       icons: {
         playing: playingIcon,
+        remove: removeIcon,
       },
     };
   },
@@ -143,6 +150,30 @@ export default defineComponent({
     >
       <p class="font-semibold font-mono">Winner</p>
     </div>
+
+    <button
+      v-if="removeable"
+      class="
+        flex
+        items-center
+        gap-1
+        text-bg-light
+        opacity-60
+        ml-auto
+        mr-4
+        hover:opacity-100
+        transition-opacity
+        duration-300
+        outline-none
+        w-4
+        h-4
+        transform
+        scale-125
+      "
+      @click="$emit('remove')"
+    >
+      <Icon class="h-full w-full" :icon="icons.remove" />
+    </button>
   </div>
 </template>
 

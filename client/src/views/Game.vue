@@ -83,31 +83,35 @@ export default defineComponent({
     let waitingForBot = false;
     let playTime = 0;
 
-    watch(playing, (playing) => {
-      if (!playing) return;
+    watch(
+      playing,
+      (playing) => {
+        if (!playing) return;
 
-      showPlayingOverlay.value = true;
-      playTime = performance.now();
+        showPlayingOverlay.value = true;
+        playTime = performance.now();
 
-      if (
-        playing.bot &&
-        game.value &&
-        (!game.value.isOnline || playing.socketId === socket.value?.socket.id)
-      ) {
-        waitingForBot = true;
-        const col = game.value.bestMove();
-        if (col !== -1) {
-          const expected = playTime;
+        if (
+          playing.bot &&
+          game.value &&
+          (!game.value.isOnline || playing.socketId === socket.value?.socket.id)
+        ) {
+          waitingForBot = true;
+          const col = game.value.bestMove();
+          if (col !== -1) {
+            const expected = playTime;
 
-          setTimeout(() => {
-            waitingForBot = false;
-            if (playTime === expected) dropPiece(col);
-          }, 2000);
+            setTimeout(() => {
+              waitingForBot = false;
+              if (playTime === expected) dropPiece(col);
+            }, 2000);
+          }
+        } else {
+          waitingForBot = false;
         }
-      } else {
-        waitingForBot = false;
-      }
-    });
+      },
+      { immediate: true }
+    );
 
     const winner = computed(() => game.value?.getWinner());
 
