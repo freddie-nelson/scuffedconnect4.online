@@ -284,7 +284,7 @@ export default class Game {
       for (let c = -1; c <= 1; c++) {
         for (let r = -1; r <= 1; r++) {
           const column = this.grid[piece.col + c];
-          if (column && !column[piece.row + r]) {
+          if (column && column[piece.row + r] === null) {
             return piece.col + c;
           }
         }
@@ -293,7 +293,7 @@ export default class Game {
 
     for (let i = 0; i < this.cols; i++) {
       const col = Math.floor(Math.random() * this.cols);
-      if (!this.grid[col][this.rows - 1]) return col;
+      if (this.grid[col][this.rows - 1] === null) return col;
     }
 
     return -1;
@@ -307,10 +307,10 @@ export default class Game {
     for (let j = 0; j < rows - 3; j++) {
       for (let i = 0; i < cols; i++) {
         if (
-          this.grid[i][j] == c &&
-          this.grid[i][j + 1] == c &&
-          this.grid[i][j + 2] == c &&
-          this.grid[i][j + 3] == c
+          this.grid[i][j] === c &&
+          this.grid[i][j + 1] === c &&
+          this.grid[i][j + 2] === c &&
+          this.grid[i][j + 3] === c
         ) {
           this.winningSlots = [];
           for (let k = 0; k <= 3; k++) {
@@ -330,10 +330,10 @@ export default class Game {
     for (let i = 0; i < cols - 3; i++) {
       for (let j = 0; j < rows; j++) {
         if (
-          this.grid[i][j] == c &&
-          this.grid[i + 1][j] == c &&
-          this.grid[i + 2][j] == c &&
-          this.grid[i + 3][j] == c
+          this.grid[i][j] === c &&
+          this.grid[i + 1][j] === c &&
+          this.grid[i + 2][j] === c &&
+          this.grid[i + 3][j] === c
         ) {
           this.winningSlots = [];
           for (let k = 0; k <= 3; k++) {
@@ -353,10 +353,10 @@ export default class Game {
     for (let i = 3; i < cols; i++) {
       for (let j = 0; j < rows - 3; j++) {
         if (
-          this.grid[i][j] == c &&
-          this.grid[i - 1][j + 1] == c &&
-          this.grid[i - 2][j + 2] == c &&
-          this.grid[i - 3][j + 3] == c
+          this.grid[i][j] === c &&
+          this.grid[i - 1][j + 1] === c &&
+          this.grid[i - 2][j + 2] === c &&
+          this.grid[i - 3][j + 3] === c
         ) {
           this.winningSlots = [];
           for (let k = 0; k <= 3; k++) {
@@ -376,10 +376,10 @@ export default class Game {
     for (let i = 3; i < cols; i++) {
       for (let j = 3; j < rows; j++) {
         if (
-          this.grid[i][j] == c &&
-          this.grid[i - 1][j - 1] == c &&
-          this.grid[i - 2][j - 2] == c &&
-          this.grid[i - 3][j - 3] == c
+          this.grid[i][j] === c &&
+          this.grid[i - 1][j - 1] === c &&
+          this.grid[i - 2][j - 2] === c &&
+          this.grid[i - 3][j - 3] === c
         ) {
           this.winningSlots = [];
           for (let k = 0; k <= 3; k++) {
