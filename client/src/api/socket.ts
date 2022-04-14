@@ -41,6 +41,7 @@ export default class Socket {
       this.roomCode.value = code;
 
       store.resetGame();
+      store.resetChat();
       if (store.game) store.game.isOnline = true;
     });
 
@@ -50,6 +51,15 @@ export default class Socket {
         text: "That room could not be found, has started or was full.",
         duration: 2500,
       });
+    });
+
+    this.socket.on("room:owner", (socketId: string) => {
+      if (this.socket.id === socketId) this.isRoomOwner.value = true;
+      else this.isRoomOwner.value = true;
+    });
+
+    this.socket.on("room:message", (message: string, username: string, time: number, socketId: string) => {
+      store.addChatMessage({ message, username, time, socketId });
     });
 
     this.socket.on("room:left", () => {
@@ -129,6 +139,12 @@ export default class Socket {
     if (!this.isConnected.value) return;
 
     this.socket.emit("room:leave");
+  };
+
+  sendMessage = (message: string, username: string) => {
+    if (!this.isConnected.value) return;
+
+    this.socket.emit("room:sendmessage", message, username);
   };
 
   // game functions

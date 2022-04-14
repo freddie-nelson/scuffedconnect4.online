@@ -5,10 +5,11 @@ import { storeToRefs } from "pinia";
 import { useStore } from "@/store";
 
 import { Colors, hex } from "@shared/colors";
-import Socket from "@/api/socket";
 
 import addIcon from "@iconify-icons/feather/user";
 import leaveIcon from "@iconify-icons/feather/log-out";
+import chatIcon from "@iconify-icons/feather/message-square";
+import startIcon from "@iconify-icons/feather/play";
 
 import Vue3Slider from "vue3-slider";
 
@@ -22,6 +23,7 @@ import CInputDropdown from "@/components/shared/Input/CInputDropdown.vue";
 import CSpinnerCircle from "@/components/shared/Spinner/CSpinnerCircle.vue";
 import Player from "@shared/player";
 import CInputToggle from "@/components/shared/Input/CInputToggle.vue";
+import CChat from "@/components/app/CChat.vue";
 
 export default defineComponent({
   name: "Room",
@@ -36,6 +38,7 @@ export default defineComponent({
     Vue3Slider,
     CSpinnerCircle,
     CInputToggle,
+    CChat,
   },
   setup() {
     const router = useRouter();
@@ -212,6 +215,8 @@ export default defineComponent({
       }
     };
 
+    const showChat = ref(false);
+
     return {
       game,
       socket,
@@ -238,10 +243,14 @@ export default defineComponent({
       startGame,
       leaveRoom,
 
+      showChat,
+
       Colors,
       icons: {
         add: addIcon,
         leave: leaveIcon,
+        chat: chatIcon,
+        start: startIcon,
       },
     };
   },
@@ -272,9 +281,7 @@ export default defineComponent({
             :isHost="p === game.getHost()"
             :isBot="p.bot"
             :removeable="
-              !isOnline ||
-              p.socketId === socket.socket.id ||
-              game.host.socketId === socket.socket.id
+              !isOnline || p.socketId === socket.socket.id || socket.isRoomOwner
             "
             @remove="removePlayer(p)"
             class="h-20 flex-grow"
@@ -382,15 +389,25 @@ export default defineComponent({
               v-model="cols"
             />
           </div>
-
-          <c-button
-            v-if="game.getPlayerCount() >= 2"
-            class="h-20 w-full"
-            @click="startGame"
-          >
-            Start Game
-          </c-button>
         </div>
+
+        <c-button-icon
+          v-if="isOnline"
+          class="h-20 flex-grow"
+          :icon="icons.chat"
+          @click="showChat = true"
+        >
+          Chat
+        </c-button-icon>
+
+        <c-button-icon
+          v-if="(!isOnline || socket.isRoomOwner) && game.getPlayerCount() >= 2"
+          class="h-20 flex-grow"
+          :icon="icons.start"
+          @click="startGame"
+        >
+          Start Game
+        </c-button-icon>
 
         <c-button-icon
           class="h-20 flex-grow"
@@ -401,6 +418,8 @@ export default defineComponent({
         </c-button-icon>
       </div>
     </div>
+
+    <c-chat v-if="showChat" @close="showChat = false" />
 
     <c-modal
       v-if="showAddPlayerModal"

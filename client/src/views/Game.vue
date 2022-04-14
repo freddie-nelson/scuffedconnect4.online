@@ -16,6 +16,7 @@ import { useRouter } from "vue-router";
 import { storeToRefs } from "pinia";
 
 import leaveIcon from "@iconify-icons/feather/log-out";
+import chatIcon from "@iconify-icons/feather/message-square";
 
 import CPlayer from "@/components/app/CPlayer.vue";
 import CGridPiece from "@/components/app/Game/CGridPiece.vue";
@@ -23,6 +24,7 @@ import CGridSlot from "@/components/app/Game/CGridSlot.vue";
 import CGridOverlay from "@/components/app/Game/CGridOverlay.vue";
 import CButton from "@/components/shared/Button/CButton.vue";
 import CButtonIcon from "@/components/shared/Button/CButtonIcon.vue";
+import CChat from "@/components/app/CChat.vue";
 
 export default defineComponent({
   name: "Game",
@@ -33,6 +35,7 @@ export default defineComponent({
     CGridOverlay,
     CButton,
     CButtonIcon,
+    CChat,
   },
   setup() {
     const router = useRouter();
@@ -190,6 +193,8 @@ export default defineComponent({
       }
     };
 
+    const showChat = ref(false);
+
     return {
       game,
       rows,
@@ -212,8 +217,11 @@ export default defineComponent({
       playingAgain,
       playAgain,
 
+      showChat,
+
       icons: {
         leave: leaveIcon,
+        chat: chatIcon,
       },
     };
   },
@@ -241,22 +249,38 @@ export default defineComponent({
       </div>
 
       <div ref="gridEl" class="grid-container">
-        <c-button-icon
-          class="
-            absolute
-            left-full
-            px-[0_!important]
-            w-9
-            h-9
-            ml-4
-            transform
-            origin-top-left
-            scale-125
-            text-bg-light
-          "
-          :icon="icons.leave"
-          @click="leaveRoom"
-        ></c-button-icon>
+        <div class="absolute left-full flex flex-col gap-6 ml-4">
+          <c-button-icon
+            class="
+              px-[0_!important]
+              w-9
+              h-9
+              transform
+              origin-top-left
+              scale-125
+              text-bg-light
+            "
+            :icon="icons.leave"
+            @click="leaveRoom"
+          ></c-button-icon>
+
+          <c-button-icon
+            v-if="game.isOnline"
+            class="
+              px-[0_!important]
+              w-9
+              h-9
+              transform
+              origin-top-left
+              scale-125
+              text-bg-light
+            "
+            :icon="icons.chat"
+            @click="showChat = true"
+          ></c-button-icon>
+
+          <c-chat v-if="showChat" @close="showChat = false" />
+        </div>
 
         <!-- pieces -->
         <div class="grid">

@@ -4,6 +4,7 @@ import { RateLimiter } from "limiter";
 import Filter from "bad-words";
 import Room from "./Room";
 import Player from "@shared/player";
+import { ChatMessage } from "@shared/chat";
 const filter = new Filter();
 
 const rooms: { [index: string]: Room } = {};
@@ -17,7 +18,7 @@ export default function (socket: Socket) {
   };
 
   const joinRoom = (code: string) => {
-    if (store.room) return;
+    if (store.room || typeof code !== "string") return;
 
     const room = rooms[code];
     if (!room || room.hasStarted() || room.getPlayerCount() >= 8) {
@@ -27,6 +28,10 @@ export default function (socket: Socket) {
 
     store.room = room;
     socket.emit("room:joined", room.code);
+
+    room.chat.forEach((msg) => {
+      socket.emit("room:message", msg.message, msg.username, msg.time, msg.socketId);
+    });
 
     room.addSocket(socket);
   };
@@ -64,6 +69,32 @@ export default function (socket: Socket) {
 
   socket.on("room:leave", leaveRoom);
 
+  const messageLimiter = new RateLimiter({ tokensPerInterval: 30, interval: "minute" });
+
+  socket.on("room:sendmessage", async (message: string, username: string) => {
+    if (!store.room || !message || !username || typeof message !== "string" || typeof username !== "string")
+      return;
+
+    if (message.length > 500) message = message.substr(0, 500);
+    if (username.length > 25) username = username.substr(0, 25);
+
+    try {
+      const remainingMessages = await messageLimiter.removeTokens(1);
+    } catch {
+      return;
+    }
+
+    const msg: ChatMessage = {
+      message: filter.clean(message),
+      username: filter.clean(username),
+      time: Date.now(),
+      socketId: socket.id,
+    };
+
+    store.room.addChatMessage(msg);
+    store.room.emitAll("room:message", msg.message, msg.username, msg.time, msg.socketId);
+  });
+
   // game events
   socket.on("game:start", () => {
     if (!store.room || socket !== store.room.owner) return;
@@ -78,14 +109,14 @@ export default function (socket: Socket) {
   });
 
   socket.on("game:addplayer", (p: Player) => {
-    if (!store.room) return;
+    if (!store.room || typeof p !== "object") return;
 
     const player = { ...p, socketId: socket.id };
     if (store.room.addPlayer(player)) store.room.emitAll("game:addplayer", player);
   });
 
   socket.on("game:removeplayer", (p: Player) => {
-    if (!store.room) return;
+    if (!store.room || typeof p !== "object") return;
 
     if (p.socketId === socket.id || store.room.getHost()?.socketId === socket.id) {
       if (store.room.removePlayer(p)) store.room.emitAll("game:removeplayer", p);
@@ -93,7 +124,13 @@ export default function (socket: Socket) {
   });
 
   socket.on("game:droppiece", (p: Player, col: number) => {
-    if (!store.room || store.room.findPlayerById(p)?.socketId !== socket.id) return;
+    if (
+      !store.room ||
+      store.room.findPlayerById(p)?.socketId !== socket.id ||
+      typeof p !== "object" ||
+      typeof col !== "number"
+    )
+      return;
 
     if (store.room.dropPiece(p, col)) {
       store.room.emitAll("game:droppiece", p, col);
@@ -101,12 +138,10 @@ export default function (socket: Socket) {
   });
 
   socket.on("game:gridsize", (rows: number, cols: number) => {
-    if (!store.room) return;
+    if (!store.room || typeof rows !== "number" || typeof cols !== "number") return;
 
     if (store.room.setGridSize(rows, cols)) store.room.emitAll("game:gridsize", rows, cols);
   });
-
-  const messageLimiter = new RateLimiter({ tokensPerInterval: 30, interval: "minute" });
 
   // socket.on("room-send-message", async (m: ChatMessage) => {
   //   if (m.text.length === 0 || m.text.length > 300) return;

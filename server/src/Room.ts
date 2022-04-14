@@ -2,12 +2,15 @@ import { v4 as uuidv4 } from "uuid";
 import { Socket } from "socket.io";
 
 import Game from "@shared/game";
+import { ChatMessage } from "@shared/chat";
 
 export default class Room extends Game {
   readonly code = uuidv4().substr(0, 5);
 
   owner: Socket;
   private sockets: Socket[] = [];
+
+  chat: ChatMessage[] = [];
 
   constructor(owner: Socket) {
     super();
@@ -31,6 +34,7 @@ export default class Room extends Game {
 
     if (socket === this.owner) {
       this.owner = this.sockets[Math.floor(Math.random() * this.sockets.length)];
+      if (this.owner) this.emitAll("room:owner", this.owner.id);
     }
 
     this.players.forEach((p) => {
@@ -40,7 +44,7 @@ export default class Room extends Game {
       }
     });
 
-    if (this.getPlayerCount() < 2) {
+    if (this.started && this.getPlayerCount() < 2) {
       this.emitAll("room:forceleave");
     }
   }
@@ -53,5 +57,11 @@ export default class Room extends Game {
     this.sockets.forEach((s) => {
       s.emit(event, ...args);
     });
+  }
+
+  addChatMessage(msg: ChatMessage) {
+    if (this.chat.length > 50) this.chat.unshift();
+
+    this.chat.push(msg);
   }
 }

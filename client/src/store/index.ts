@@ -1,18 +1,12 @@
 import { defineStore } from "pinia";
-import { ref, watch } from "vue";
+import { ref } from "vue";
 import Socket from "@/api/socket";
 import Game from "@shared/game";
+import { ChatMessage } from "@shared/chat";
 
 export interface Toast {
   text: string;
   duration?: number;
-}
-
-export interface State {
-  toastQueue: Toast[];
-  theme: string;
-  game?: Game;
-  socket?: Socket;
 }
 
 export const useStore = defineStore("main", () => {
@@ -40,6 +34,14 @@ export const useStore = defineStore("main", () => {
     socket.value = new Socket();
   };
 
+  const chat = ref<ChatMessage[]>([]);
+  const addChatMessage = (msg: ChatMessage) => {
+    chat.value = [...chat.value, msg];
+  };
+  const resetChat = () => {
+    chat.value = [];
+  };
+
   return {
     toastQueue,
     addToast,
@@ -53,5 +55,9 @@ export const useStore = defineStore("main", () => {
 
     socket,
     createSocket,
+
+    chat,
+    addChatMessage,
+    resetChat,
   };
 });
