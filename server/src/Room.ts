@@ -6,6 +6,7 @@ import { ChatMessage } from "@shared/chat";
 
 export default class Room extends Game {
   readonly code = uuidv4().substr(0, 5);
+  isPublic = false;
 
   owner: Socket;
   private sockets: Socket[] = [];

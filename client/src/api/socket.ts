@@ -147,6 +147,12 @@ export default class Socket {
     this.socket.emit("room:sendmessage", message, username);
   };
 
+  setIsPublic = (isPublic: boolean) => {
+    if (!this.isConnected.value) return;
+
+    this.socket.emit("room:ispublic", isPublic);
+  };
+
   // game functions
   startGame = () => {
     const store = useStore();

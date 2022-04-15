@@ -183,6 +183,13 @@ export default defineComponent({
       }
     };
 
+    const isPublic = ref(false);
+    watch(isPublic, (curr, old) => {
+      if (!socket.value || !isOnline.value) return;
+
+      socket.value.setIsPublic(isPublic.value);
+    });
+
     const rows = ref(6);
     const cols = ref(7);
 
@@ -237,6 +244,7 @@ export default defineComponent({
       addPlayer,
       removePlayer,
 
+      isPublic,
       rows,
       cols,
 
@@ -356,6 +364,11 @@ export default defineComponent({
           v-if="!isOnline || socket.isRoomOwner"
           class="flex flex-col gap-5 w-full"
         >
+          <div>
+            <p class="text-t-sub font-medium mb-0.5">Public</p>
+            <c-input-toggle v-if="isOnline" v-model="isPublic" />
+          </div>
+
           <div>
             <p class="text-t-sub font-medium">Rows</p>
             <vue3-slider

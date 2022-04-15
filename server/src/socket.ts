@@ -5,10 +5,27 @@ import Filter from "bad-words";
 import Room from "./Room";
 import Player from "@shared/player";
 import { ChatMessage } from "@shared/chat";
+import { PublicRoom } from "@shared/publicRoom";
 const filter = new Filter();
 
 const rooms: { [index: string]: Room } = {};
-const publicRooms: { host: string; code: string; maxPlayers: number; playerCount: number }[] = [];
+
+const publicRooms: PublicRoom[] = [];
+const refreshPublicRooms = () => {
+  const roomsArr = Object.values(rooms);
+  publicRooms.length = 0;
+
+  for (const room of roomsArr) {
+    if (!room.isPublic || room.hasStarted()) continue;
+
+    publicRooms.push({
+      host: room.players.find((p) => p.socketId === room.owner.id)?.username || room.owner.id.substr(0, 8),
+      code: room.code,
+      players: room.getPlayerCount(),
+    });
+  }
+};
+setInterval(refreshPublicRooms, 3000);
 
 export default function (socket: Socket) {
   const store: {
@@ -45,7 +62,7 @@ export default function (socket: Socket) {
 
     socket.emit("room:left");
 
-    if (room.getSocketCount() === 0) {
+    if (room.getSocketCount() === 0 || (room.getPlayerCount() < 2 && room.hasStarted())) {
       delete rooms[room.code];
     }
   };
@@ -93,6 +110,18 @@ export default function (socket: Socket) {
 
     store.room.addChatMessage(msg);
     store.room.emitAll("room:message", msg.message, msg.username, msg.time, msg.socketId);
+  });
+
+  socket.on("room:ispublic", (isPublic: boolean) => {
+    if (
+      !store.room ||
+      typeof isPublic !== "boolean" ||
+      socket !== store.room.owner ||
+      store.room.isPublic === isPublic
+    )
+      return;
+
+    store.room.isPublic = isPublic;
   });
 
   // game events
@@ -161,7 +190,7 @@ export default function (socket: Socket) {
   //   room.broadcastState();
   // });
 
-  socket.on("get-public-rooms", () => {
-    socket.emit("recieve-public-rooms", publicRooms);
+  socket.on("global:publicrooms", (cb: (rooms: PublicRoom[]) => void) => {
+    cb(publicRooms);
   });
 }
