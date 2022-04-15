@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted } from "vue";
+import { defineComponent, onMounted, ref } from "vue";
 import { useStore } from "./store";
 import themes from "@/utils/themes";
 
@@ -11,6 +11,7 @@ export default defineComponent({
   components: { CToastController, CThemeSelector },
   setup() {
     const store = useStore();
+    const saContainer = ref(document.createElement("div"));
 
     onMounted(() => {
       const html = document.querySelector("html");
@@ -18,7 +19,22 @@ export default defineComponent({
       html?.classList.add(theme);
 
       store.setTheme(theme);
+
+      // setup simple analytics
+      if (process.env.NODE_ENV === "production") {
+        const script = document.createElement("script");
+        script.async = true;
+        script.defer = true;
+        script.src = "https://scripts.simpleanalyticscdn.com/latest.js";
+        script.setAttribute("data-hostname", "scuffed4inarow.online");
+
+        saContainer.value.prepend(script);
+      }
     });
+
+    return {
+      saContainer,
+    };
   },
 });
 </script>
@@ -51,6 +67,9 @@ export default defineComponent({
       bg-gradient-to-r bg-gradient-to-l bg-gradient-to-t bg-gradient-to-b
     "
   ></span>
+
+  <!-- 100% privacy friendly analytics -->
+  <div class="saContainer"></div>
 </template>
 
 <style lang="scss">
