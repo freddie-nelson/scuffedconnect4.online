@@ -15,7 +15,7 @@ export default defineComponent({
 
     onMounted(() => {
       const html = document.querySelector("html");
-      const theme = localStorage.getItem("theme") || themes[0];
+      const theme = localStorage.getItem("theme") || "light";
       html?.classList.add(theme);
 
       store.setTheme(theme);
