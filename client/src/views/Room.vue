@@ -364,9 +364,9 @@ export default defineComponent({
           v-if="!isOnline || socket.isRoomOwner"
           class="flex flex-col gap-5 w-full"
         >
-          <div>
+          <div v-if="isOnline">
             <p class="text-t-sub font-medium mb-0.5">Public</p>
-            <c-input-toggle v-if="isOnline" v-model="isPublic" />
+            <c-input-toggle v-model="isPublic" />
           </div>
 
           <div>
