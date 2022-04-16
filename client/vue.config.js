@@ -12,7 +12,7 @@ module.exports = defineConfig({
   },
   chainWebpack: (config) => {
     config.plugin("html").tap((args) => {
-      args[0].title = "Scuffed Connect 4";
+      args[0].title = "Scuffed 4 in a Row";
       return args;
     });
   },

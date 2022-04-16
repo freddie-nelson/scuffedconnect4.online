@@ -86,7 +86,7 @@ export default defineComponent({
 <template>
   <main class="flex flex-col justify-center items-center p-5">
     <c-gradient-heading class="text-center" :size="7">
-      Scuffed Connect 4
+      Scuffed 4 in a Row
     </c-gradient-heading>
 
     <div class="flex flex-col gap-4 max-w-md w-full mt-8">
