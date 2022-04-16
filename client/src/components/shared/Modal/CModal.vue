@@ -18,7 +18,10 @@
         class="absolute top-0 left-0 w-full h-full bg-bg-dark opacity-30"
       ></div>
 
-      <section v-bind="$attrs" class="p-12 rounded-xl relative bg-bg-dark">
+      <section
+        v-bind="$attrs"
+        class="p-12 rounded-xl relative bg-bg-dark max-h-full overflow-y-scroll"
+      >
         <button
           v-if="closeable"
           class="
