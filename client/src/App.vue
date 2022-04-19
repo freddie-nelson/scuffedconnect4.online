@@ -11,7 +11,7 @@ export default defineComponent({
   components: { CToastController, CThemeSelector },
   setup() {
     const store = useStore();
-    const saContainer = ref(document.createElement("div"));
+    const saContainer = ref();
 
     onMounted(() => {
       const html = document.querySelector("html");
@@ -28,7 +28,7 @@ export default defineComponent({
         script.src = "https://scripts.simpleanalyticscdn.com/latest.js";
         script.setAttribute("data-hostname", "scuffed4inarow.online");
 
-        saContainer.value.prepend(script);
+        saContainer.value?.appendChild(script);
       }
     });
 
@@ -69,7 +69,7 @@ export default defineComponent({
   ></span>
 
   <!-- 100% privacy friendly analytics -->
-  <div class="saContainer"></div>
+  <div ref="saContainer"></div>
 </template>
 
 <style lang="scss">

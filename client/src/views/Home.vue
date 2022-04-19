@@ -106,6 +106,13 @@ export default defineComponent({
       </c-button-icon>
     </div>
 
+    <a
+      href="https://www.crazygames.com/game/scuffed-4-in-a-row"
+      class="absolute bottom-3 left-3 text-t-sub font-medium underline text-lg"
+    >
+      Play on crazygames.com
+    </a>
+
     <c-modal
       v-if="showOnlineModal"
       class="w-full max-w-xl flex flex-col justify-center items-center gap-4"
