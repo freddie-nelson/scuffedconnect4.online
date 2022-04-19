@@ -1,7 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref } from "vue";
 import { useStore } from "./store";
-import themes from "@/utils/themes";
 
 import CThemeSelector from "./components/shared/CThemeSelector.vue";
 import CToastController from "./components/shared/Toast/CToastController.vue";

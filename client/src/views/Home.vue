@@ -122,6 +122,7 @@ export default defineComponent({
         justify-center
       "
       href="https://scuffeduno.online"
+      target="_blank"
     >
       <p class="text-white font-semibold text-lg">
         Play UNO online with friends!
@@ -130,8 +131,9 @@ export default defineComponent({
     </a>
 
     <a
-      href="https://www.crazygames.com/game/scuffed-4-in-a-row"
       class="absolute bottom-3 left-3 text-t-sub font-medium underline text-lg"
+      href="https://www.crazygames.com/game/scuffed-4-in-a-row"
+      target="_blank"
     >
       Play on crazygames.com
     </a>
