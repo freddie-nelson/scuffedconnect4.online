@@ -108,6 +108,7 @@ export default defineComponent({
 
     <a
       class="
+        scuffeduno-ad
         absolute
         xl:right-3 xl:bottom-auto
         bottom-3
@@ -290,5 +291,11 @@ export default defineComponent({
 <style lang="scss" scoped>
 *::-webkit-scrollbar {
   display: none;
+}
+
+.scuffeduno-ad {
+  @media screen and (max-height: 750px) and (max-width: 1280px) {
+    display: none !important;
+  }
 }
 </style>
