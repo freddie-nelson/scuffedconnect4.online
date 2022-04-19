@@ -107,6 +107,28 @@ export default defineComponent({
     </div>
 
     <a
+      class="
+        absolute
+        xl:right-3 xl:bottom-auto
+        bottom-3
+        bg-[#80150F]
+        p-3
+        rounded-xl
+        w-72
+        flex flex-col
+        gap-5
+        items-center
+        justify-center
+      "
+      href="https://scuffeduno.online"
+    >
+      <p class="text-white font-semibold text-lg">
+        Play UNO online with friends!
+      </p>
+      <img src="@/assets/scuffeduno.png" alt="" />
+    </a>
+
+    <a
       href="https://www.crazygames.com/game/scuffed-4-in-a-row"
       class="absolute bottom-3 left-3 text-t-sub font-medium underline text-lg"
     >
